@@ -232,8 +232,14 @@ export function CinematicHero() {
                   <Txt page="accueil" k="hero.cta2" />
                 </Link>
               </div>
+
+              {/* Bandeau des logos partenaires (géré dans le CMS) */}
+              <div className="mt-10 max-w-xl lg:max-w-2xl">
+                <PartnersStrip />
+              </div>
             </div>
           </div>
+
         </motion.div>
 
         {/* Scroll hint */}
