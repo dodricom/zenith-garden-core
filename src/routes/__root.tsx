@@ -82,23 +82,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "DODRICOM — L'innovation au service de votre performance" },
+      { title: "DODRICOM — Entrez dans le siège de l'innovation" },
       {
         name: "description",
         content:
-          "Solutions premium en Domotique, Digital, Réseaux, IA, COM et Événementiel. DODRICOM accompagne votre croissance.",
+          "Vivez une expérience cinématique : entrez dans le siège DODRICOM et découvrez nos solutions premium en Domotique, Digital, Réseaux, IA, COM et Événementiel.",
       },
       { name: "author", content: "DODRICOM" },
-      { property: "og:title", content: "DODRICOM — L'innovation au service de votre performance" },
+      { property: "og:title", content: "DODRICOM — Entrez dans le siège de l'innovation" },
       {
         property: "og:description",
         content:
-          "Solutions premium en Domotique, Digital, Réseaux, IA, COM et Événementiel. DODRICOM accompagne votre croissance.",
+          "Vivez une expérience cinématique : entrez dans le siège DODRICOM et découvrez nos solutions premium en Domotique, Digital, Réseaux, IA, COM et Événementiel.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "DODRICOM — L'innovation au service de votre performance" },
-      { name: "twitter:description", content: "Solutions premium en Domotique, Digital, Réseaux, IA, COM et Événementiel. DODRICOM accompagne votre croissance." },
+      { name: "twitter:title", content: "DODRICOM — Entrez dans le siège de l'innovation" },
+      { name: "twitter:description", content: "Vivez une expérience cinématique : entrez dans le siège DODRICOM et découvrez nos solutions premium en Domotique, Digital, Réseaux, IA, COM et Événementiel." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/286dfcbf-7f76-4377-ad4c-39901a847fb7/id-preview-219103e6--9dbc2867-8560-4eb2-8097-0acc0955c126.lovable.app-1784593791234.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/286dfcbf-7f76-4377-ad4c-39901a847fb7/id-preview-219103e6--9dbc2867-8560-4eb2-8097-0acc0955c126.lovable.app-1784593791234.png" },
     ],

@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
           "Vivez une expérience cinématique : entrez dans le siège DODRICOM et découvrez nos solutions premium en Domotique, Digital, Réseaux, IA, COM et Événementiel.",
       },
       { property: "og:title", content: "DODRICOM — Entrez dans le siège de l'innovation" },
-      { property: "og:description", content: "Expérience cinématique DODRICOM : domotique, digital, réseaux, IA, COM et événementiel." },
+      { property: "og:description", content: "Vivez une expérience cinématique : entrez dans le siège DODRICOM et découvrez nos solutions premium en Domotique, Digital, Réseaux, IA, COM et Événementiel." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
