@@ -1,6 +1,6 @@
-import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
 
 export type PartnerItem = { id: string; name: string; logoUrl: string | null; websiteUrl: string | null };
 
