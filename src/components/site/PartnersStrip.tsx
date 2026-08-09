@@ -26,7 +26,6 @@ export function usePartners() {
 
 /** Bandeau défilant des logos partenaires, piloté par le CMS. */
 export function PartnersStrip({ className = "" }: { className?: string }) {
-  useContext; // no-op to keep import list stable
   const { data } = usePartners();
   const partners = data ?? [];
   if (partners.length === 0) return null;
