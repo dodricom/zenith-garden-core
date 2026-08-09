@@ -177,12 +177,8 @@ export function CinematicHero() {
         </motion.div>
 
         {/* Partners marquee — visible when the camera reaches the doors */}
-        <motion.div
-          className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6"
-          style={{ opacity: doorsOpacity }}
-        >
-          <PartnersMarquee />
-        </motion.div>
+
+
 
         {/* Scene 3 — Accueil / reception desk, final camera position */}
         <motion.div
