@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, useSpring, type MotionValue } from "framer-motion";
 import Lenis from "lenis";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, MousePointer2, Award, Briefcase, Headphones, Users } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useT, Txt, useCmsImage } from "@/lib/site-text-context";
+import { PartnersStrip } from "@/components/site/PartnersStrip";
 import exteriorImg from "@/assets/scene-exterior.jpg";
 import doorsImg from "@/assets/scene-doors.jpg";
 import receptionImg from "@/assets/scene-reception-desk.jpg";
@@ -21,17 +22,6 @@ const TIMELINE = [
   { year: "2021", text: "Ouverture des pôles Digital & Réseaux." },
   { year: "2023", text: "Lancement du laboratoire IA." },
   { year: "2025", text: "Un écosystème complet : 6 pôles, 250+ projets." },
-];
-
-const PARTNERS = [
-  { name: "OCP Group", short: "OCP" },
-  { name: "Maroc Telecom", short: "IAM" },
-  { name: "Attijariwafa Bank", short: "AWB" },
-  { name: "Royal Air Maroc", short: "RAM" },
-  { name: "Marjane Holding", short: "MARJANE" },
-  { name: "Managem", short: "MANAGEM" },
-  { name: "CDG Développement", short: "CDG" },
-  { name: "Label'Vie", short: "LABEL'VIE" },
 ];
 
 /**
@@ -177,12 +167,8 @@ export function CinematicHero() {
         </motion.div>
 
         {/* Partners marquee — visible when the camera reaches the doors */}
-        <motion.div
-          className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6"
-          style={{ opacity: doorsOpacity }}
-        >
-          <PartnersMarquee />
-        </motion.div>
+
+
 
         {/* Scene 3 — Accueil / reception desk, final camera position */}
         <motion.div
@@ -236,8 +222,14 @@ export function CinematicHero() {
                   <Txt page="accueil" k="hero.cta2" />
                 </Link>
               </div>
+
+              {/* Bandeau des logos partenaires (géré dans le CMS) */}
+              <div className="mt-10 max-w-xl lg:max-w-2xl">
+                <PartnersStrip />
+              </div>
             </div>
           </div>
+
         </motion.div>
 
         {/* Scroll hint */}
@@ -318,60 +310,6 @@ function ScrollRail({ progress }: { progress: MotionValue<number> }) {
         className="w-full rounded-full bg-[var(--gradient-primary)] shadow-[0_0_10px_rgba(139,61,255,0.8)]"
         style={{ height }}
       />
-    </div>
-  );
-}
-
-function PartnersMarquee() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const items = [...PARTNERS, ...PARTNERS];
-
-  return (
-    <div className="pointer-events-auto w-full">
-      <div className="mx-auto max-w-6xl overflow-hidden px-5 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-        <div
-          className="flex w-max items-center gap-10 animate-marquee-x"
-          style={{ animationPlayState: selected ? "paused" : "running" }}
-        >
-          {items.map((p, i) => {
-            const active = selected === p.name;
-            return (
-              <button
-                key={`${p.name}-${i}`}
-                type="button"
-                onClick={() => setSelected(active ? null : p.name)}
-                className="glass shrink-0 px-6 py-3 transition-all duration-300"
-                style={{
-                  filter: active ? "none" : "grayscale(1)",
-                  opacity: active ? 1 : 0.55,
-                  borderColor: active ? "rgba(139,61,255,0.6)" : undefined,
-                  boxShadow: active ? "var(--shadow-glow)" : undefined,
-                }}
-                aria-label={p.name}
-              >
-                <span
-                  className={`whitespace-nowrap text-lg font-black tracking-[0.18em] ${active ? "gradient-text" : "text-white"}`}
-                >
-                  {p.short}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="mt-6 flex h-14 items-center justify-center px-5 text-center">
-        {selected && (
-          <motion.p
-            key={selected}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="gradient-text text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl"
-          >
-            {selected}
-          </motion.p>
-        )}
-      </div>
     </div>
   );
 }

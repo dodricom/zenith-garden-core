@@ -4,6 +4,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { useScrollPageNav, PAGE_ORDER } from "@/lib/use-scroll-page-nav";
+import { CustomTexts } from "@/lib/site-text-context";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   useScrollPageNav();
@@ -22,6 +23,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         className="pt-[78px] lg:pt-[90px]"
       >
         {children}
+        <CustomTexts page={pathname === "/" ? "accueil" : pathname.replace(/^\//, "")} />
       </motion.main>
       {next && (
         <div className="pointer-events-none flex justify-center pb-6">

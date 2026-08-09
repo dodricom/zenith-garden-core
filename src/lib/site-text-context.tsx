@@ -120,3 +120,31 @@ export function Txt({
     </span>
   );
 }
+
+/** Tous les textes libres ajoutés depuis le CMS pour une page donnée. */
+export function useCustomTexts(pageSlug: string) {
+  const { texts, styles } = useContext(SiteTextContext);
+  const prefix = `${pageSlug}.custom.`;
+  return Object.keys(texts)
+    .filter((id) => id.startsWith(prefix) && (texts[id] ?? "").trim())
+    .sort()
+    .map((id) => ({ id, value: texts[id]!, style: styles[id] }));
+}
+
+/** Bloc affichant les textes libres ajoutés dans le CMS (section « Textes libres »). */
+export function CustomTexts({ page }: { page: string }) {
+  const items = useCustomTexts(page);
+  const visible = items.filter((i) => !i.style?.hidden);
+  if (visible.length === 0) return null;
+  return (
+    <section className="relative mx-auto max-w-7xl px-5 pb-24 lg:px-8">
+      <div className="glass space-y-4 p-8">
+        {visible.map((i) => (
+          <p key={i.id} data-cms={i.id} className="text-base leading-relaxed text-white/80" style={styleToCss(i.style)}>
+            {i.value}
+          </p>
+        ))}
+      </div>
+    </section>
+  );
+}
