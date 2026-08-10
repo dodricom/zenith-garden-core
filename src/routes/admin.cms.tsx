@@ -34,7 +34,7 @@ import {
 
 export const Route = createFileRoute("/admin/cms")({ component: CmsPage });
 
-type Tab = "texts" | "images" | "pages" | "partners" | "typo" | "code";
+type Tab = "texts" | "ai" | "images" | "pages" | "partners" | "typo" | "code";
 type CmsPageRow = { id: string; slug: string; title: string; sort_order: number };
 type PartnerRow = { id: string; name: string; logo_url: string | null; website_url: string | null; sort_order: number };
 type CustomFieldMap = Record<string, TextField[]>;
