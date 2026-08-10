@@ -413,6 +413,7 @@ function CmsPage() {
 
   const tabs: { id: Tab; label: string; icon: typeof Type }[] = [
     { id: "texts", label: "Textes", icon: Type },
+    { id: "ai", label: "IA", icon: Sparkles },
     { id: "images", label: "Images", icon: ImageIcon },
     { id: "pages", label: "Pages", icon: Layers },
     { id: "partners", label: "Partenaires", icon: Handshake },
