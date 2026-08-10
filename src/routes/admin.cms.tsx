@@ -24,7 +24,7 @@ import {
 import { AdminShell } from "@/components/admin/AdminShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { runCmsAi } from "@/lib/cms-ai.functions";
+import { runCmsAi, type CmsAiResult } from "@/lib/cms-ai.functions";
 import {
   FONT_CHOICES,
   IMAGE_PAGES,
