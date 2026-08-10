@@ -833,6 +833,54 @@ function CmsPage() {
                 ))}
               </div>
             </div>
+          ) : tab === "ai" ? (
+            <div className="grid max-w-3xl gap-4">
+              <p className="text-xs text-white/50">
+                Décrivez en langage naturel ce que vous voulez changer sur la page <strong>{pageName}</strong> (textes,
+                couleurs, tailles, position, partenaires, pages, typographie). L'IA applique les modifications
+                directement.
+              </p>
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                rows={4}
+                placeholder="Ex : rends le titre du hero plus percutant, en majuscules et centré, et ajoute un partenaire nommé Orange"
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white outline-none focus:border-[color:var(--brand-violet)]/60"
+              />
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "Réécris tous les textes de cette page de façon plus percutante",
+                  "Mets le titre principal en majuscules, centré et en violet",
+                  "Ajoute un texte libre « Offre de lancement -20% »",
+                  "Passe la police des titres en Poppins",
+                ].map((s) => (
+                  <button key={s} onClick={() => setAiPrompt(s)} className={chipCls}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <div>
+                <button
+                  onClick={askAi}
+                  disabled={aiLoading || !aiPrompt.trim()}
+                  className="btn-gradient inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold disabled:opacity-60"
+                >
+                  {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {aiLoading ? "L'IA travaille…" : "Générer et appliquer"}
+                </button>
+              </div>
+              {aiResult && (
+                <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-4">
+                  <p className="text-sm font-semibold text-emerald-200">{aiResult.summary}</p>
+                  <ul className="mt-2 space-y-1 text-xs text-white/70">
+                    {aiResult.applied.map((a, i) => (
+                      <li key={i}>• {a}</li>
+                    ))}
+                    {aiResult.applied.length === 0 && <li>Aucune modification appliquée.</li>}
+                  </ul>
+                </div>
+              )}
+            </div>
           ) : tab === "typo" ? (
             <div className="grid max-w-xl gap-4">
               <label className="block">
