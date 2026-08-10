@@ -16,12 +16,15 @@ import {
   Search,
   Settings2,
   Sliders,
+  Sparkles,
   Trash2,
   Type,
   Upload,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { runCmsAi } from "@/lib/cms-ai.functions";
 import {
   FONT_CHOICES,
   IMAGE_PAGES,
