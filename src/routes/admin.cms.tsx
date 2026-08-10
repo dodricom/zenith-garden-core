@@ -78,6 +78,26 @@ function CmsPage() {
   const [codeMode, setCodeMode] = useState(false);
   const [code, setCode] = useState("");
   const [newPage, setNewPage] = useState({ title: "", slug: "" });
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<CmsAiResult | null>(null);
+  const callAi = useServerFn(runCmsAi);
+
+  const askAi = async () => {
+    setAiLoading(true);
+    setError(null);
+    setAiResult(null);
+    try {
+      const res = await callAi({ data: { prompt: aiPrompt, pageSlug } });
+      setAiResult(res);
+      await reload();
+      await queryClient.invalidateQueries({ queryKey: ["site-texts"] });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const staticPage = TEXT_PAGES.find((p) => p.slug === activeSlug);
   const imagePage = IMAGE_PAGES.find((p) => p.slug === activeSlug);
