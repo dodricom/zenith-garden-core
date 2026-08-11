@@ -1,17 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, LogIn, Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { LoginModal } from "./LoginModal";
 import { useAuth } from "@/lib/auth";
+import { useSiteConfig } from "@/lib/site-text-context";
 
-const NAV = [
-  { to: "/", label: "Accueil" },
-  { to: "/a-propos", label: "À propos" },
-  { to: "/services", label: "Nos services" },
-  { to: "/realisations", label: "Réalisations" },
-  { to: "/blog", label: "Blog" },
-  { to: "/contact", label: "Contact" },
+const ALL_NAV = [
+  { to: "/", slug: "accueil", label: "Accueil" },
+  { to: "/a-propos", slug: "a-propos", label: "À propos" },
+  { to: "/services", slug: "services", label: "Nos services" },
+  { to: "/realisations", slug: "realisations", label: "Réalisations" },
+  { to: "/blog", slug: "blog", label: "Blog" },
+  { to: "/contact", slug: "contact", label: "Contact" },
 ] as const;
 
 export function Navbar() {
@@ -19,6 +20,12 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const { user } = useAuth();
+  const { pageVisibility } = useSiteConfig();
+  const NAV = useMemo(
+    () => ALL_NAV.filter((i) => pageVisibility[i.slug] !== false || Boolean(user)),
+    [pageVisibility, user],
+  );
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
