@@ -1,16 +1,28 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
+import { MaintenanceScreen } from "./MaintenanceScreen";
 import { useScrollPageNav, PAGE_ORDER } from "@/lib/use-scroll-page-nav";
-import { CustomTexts } from "@/lib/site-text-context";
+import { CustomTexts, useSiteConfig } from "@/lib/site-text-context";
+import { useAuth } from "@/lib/auth";
+
+export function slugFromPath(pathname: string) {
+  return pathname === "/" ? "accueil" : pathname.replace(/^\//, "").replace(/\/$/, "");
+}
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   useScrollPageNav();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const index = PAGE_ORDER.indexOf(pathname as (typeof PAGE_ORDER)[number]);
   const next = index >= 0 ? PAGE_ORDER[index + 1] : undefined;
+  const { maintenance, pageVisibility } = useSiteConfig();
+  const { user } = useAuth();
+  const slug = slugFromPath(pathname);
+  const pageHidden = pageVisibility[slug] === false;
+
+  if (maintenance.enabled && !user) return <MaintenanceScreen />;
 
   return (
     <div className="relative min-h-screen">
@@ -22,8 +34,25 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="pt-[78px] lg:pt-[90px]"
       >
-        {children}
-        <CustomTexts page={pathname === "/" ? "accueil" : pathname.replace(/^\//, "")} />
+        {pageHidden && !user ? (
+          <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center px-5 text-center">
+            <h1 className="text-3xl font-black text-white">Page indisponible</h1>
+            <p className="mt-3 text-white/60">Cette page n'est pas accessible pour le moment.</p>
+            <Link to="/" className="btn-gradient mt-6 rounded-full px-5 py-2.5 text-sm font-semibold">
+              Retour à l'accueil
+            </Link>
+          </div>
+        ) : (
+          <>
+            {pageHidden && user && (
+              <p className="mx-auto mb-2 w-fit rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-xs text-amber-200">
+                Page masquée aux visiteurs (visible car vous êtes connecté).
+              </p>
+            )}
+            {children}
+            <CustomTexts page={slug} />
+          </>
+        )}
       </motion.main>
       {next && (
         <div className="pointer-events-none flex justify-center pb-6">
@@ -36,6 +65,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
 
 export function PageHeader({
   eyebrow,
