@@ -91,6 +91,11 @@ function CmsPage() {
   const [customFields, setCustomFields] = useState<CustomFieldMap>({});
   const [dbPages, setDbPages] = useState<CmsPageRow[]>([]);
   const [partners, setPartners] = useState<PartnerRow[]>([]);
+  const [visibility, setVisibility] = useState<PageVisibility>({});
+  const [maintenance, setMaintenance] = useState<MaintenanceConfig>(MAINTENANCE_DEFAULT);
+  const [buttons, setButtons] = useState<CustomButtonMap>({});
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+
   const [openStyle, setOpenStyle] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
