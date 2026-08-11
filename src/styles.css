@@ -233,6 +233,24 @@
   animation: marquee-x 28s linear infinite;
 }
 
+/* Bande de logos partenaires : défilement continu, très fluide, pause au survol */
+.logo-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+.logo-marquee-track {
+  animation: marquee-x 42s linear infinite;
+  will-change: transform;
+}
+.logo-marquee:hover .logo-marquee-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-marquee-track { animation: none; }
+}
+
+
 @utility animate-float {
   animation: float 6s ease-in-out infinite;
 }
