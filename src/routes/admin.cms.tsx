@@ -926,7 +926,20 @@ function CmsPage() {
                       className="min-w-[180px] flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none"
                     />
                     <span className="text-xs text-white/40">/{p.slug}</span>
+                    <button
+                      onClick={() => void toggleVisibility(p.slug)}
+                      title={visibility[p.slug] === false ? "Page masquée aux visiteurs" : "Page visible par les visiteurs"}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition ${
+                        visibility[p.slug] === false
+                          ? "border-rose-400/40 bg-rose-400/10 text-rose-200"
+                          : "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                      }`}
+                    >
+                      {visibility[p.slug] === false ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      {visibility[p.slug] === false ? "Masquée" : "Visible"}
+                    </button>
                     <div className="ml-auto flex items-center gap-1">
+
                       <button onClick={() => void movePage(i, -1)} disabled={i === 0} className={`${btnCls} disabled:opacity-30`}>
                         <ArrowUp className="h-3.5 w-3.5" />
                       </button>
