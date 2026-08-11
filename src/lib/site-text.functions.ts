@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { TextStyle, Typography } from "./site-text";
+import type { CustomButtonMap, MaintenanceConfig, PageVisibility } from "./site-config";
 
 export type SiteTextRow = { pageSlug: string; textKey: string; value: string; style: TextStyle };
 export type SiteImageRow = { pageSlug: string; imageKey: string; url: string | null };
@@ -9,6 +10,9 @@ export type SiteContent = {
   texts: SiteTextRow[];
   images: SiteImageRow[];
   typography: Partial<Typography> | null;
+  maintenance: Partial<MaintenanceConfig> | null;
+  pageVisibility: PageVisibility;
+  buttons: CustomButtonMap;
 };
 
 function publicClient() {
@@ -32,8 +36,13 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(async ()
   const [textsRes, imagesRes, settingsRes] = await Promise.all([
     supabase.from("content_texts").select("page_slug, text_key, value, style"),
     supabase.from("content_images").select("page_slug, image_key, url"),
-    supabase.from("site_settings").select("key, value").eq("key", "typography").maybeSingle(),
+    supabase
+      .from("site_settings")
+      .select("key, value")
+      .in("key", ["typography", "maintenance", "page_visibility", "cms_custom_buttons"]),
   ]);
+
+  const settings = new Map((settingsRes.data ?? []).map((r) => [r.key, r.value]));
 
   return {
     texts: (textsRes.data ?? []).map((r) => ({
@@ -47,6 +56,9 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(async ()
       imageKey: r.image_key,
       url: r.url,
     })),
-    typography: (settingsRes.data?.value ?? null) as Partial<Typography> | null,
+    typography: (settings.get("typography") ?? null) as Partial<Typography> | null,
+    maintenance: (settings.get("maintenance") ?? null) as Partial<MaintenanceConfig> | null,
+    pageVisibility: (settings.get("page_visibility") ?? {}) as PageVisibility,
+    buttons: (settings.get("cms_custom_buttons") ?? {}) as CustomButtonMap,
   };
 });
