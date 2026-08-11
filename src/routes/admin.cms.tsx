@@ -6,10 +6,14 @@ import {
   ArrowUp,
   Check,
   Code2,
+  Eye,
+  EyeOff,
   Handshake,
+  History,
   Image as ImageIcon,
   Layers,
   Loader2,
+  MousePointerClick,
   Plus,
   RotateCcw,
   Save,
@@ -20,6 +24,7 @@ import {
   Trash2,
   Type,
   Upload,
+  Wrench,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,13 +39,30 @@ import {
   type TextStyle,
   type Typography,
 } from "@/lib/site-text";
+import {
+  MAINTENANCE_DEFAULT,
+  type CustomButton,
+  type CustomButtonMap,
+  type MaintenanceConfig,
+  type PageVisibility,
+} from "@/lib/site-config";
 
 export const Route = createFileRoute("/admin/cms")({ component: CmsPage });
 
-type Tab = "texts" | "ai" | "images" | "pages" | "partners" | "typo" | "code";
+type Tab = "texts" | "ai" | "images" | "pages" | "buttons" | "partners" | "maintenance" | "typo" | "code";
 type CmsPageRow = { id: string; slug: string; title: string; sort_order: number };
 type PartnerRow = { id: string; name: string; logo_url: string | null; website_url: string | null; sort_order: number };
 type CustomFieldMap = Record<string, TextField[]>;
+type Snapshot = {
+  at: string;
+  texts: { page_slug: string; text_key: string; value: string; style: TextStyle }[];
+  typography: Typography;
+  customFields: CustomFieldMap;
+  pageVisibility: PageVisibility;
+  buttons: CustomButtonMap;
+  maintenance: MaintenanceConfig;
+};
+
 
 const inputCls =
   "w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-[color:var(--brand-violet)]/60";
