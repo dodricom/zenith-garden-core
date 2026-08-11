@@ -619,9 +619,22 @@ function CmsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={resetPage} className={btnCls}>
-                <RotateCcw className="h-3.5 w-3.5" /> Réinitialiser
+              <button
+                onClick={() => lastSnapshot && void restoreSnapshot(lastSnapshot)}
+                disabled={!lastSnapshot || saving}
+                title={
+                  lastSnapshot
+                    ? `Restaurer la sauvegarde du ${new Date(lastSnapshot.at).toLocaleString("fr-FR")}`
+                    : "Aucune sauvegarde disponible"
+                }
+                className={`${btnCls} disabled:opacity-40`}
+              >
+                <History className="h-3.5 w-3.5" /> Réinitialiser (dernière sauvegarde)
               </button>
+              <button onClick={resetPage} className={btnCls}>
+                <RotateCcw className="h-3.5 w-3.5" /> Valeurs d'origine
+              </button>
+
               <button
                 onClick={save}
                 disabled={saving}
