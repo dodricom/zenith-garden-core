@@ -2,6 +2,13 @@ import { createContext, useContext, useMemo, type CSSProperties, type ReactNode 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { getSiteContent } from "./site-text.functions";
 import { TEXT_DEFAULTS, TYPOGRAPHY_DEFAULT, type TextStyle, type Typography } from "./site-text";
+import {
+  MAINTENANCE_DEFAULT,
+  type CustomButton,
+  type CustomButtonMap,
+  type MaintenanceConfig,
+  type PageVisibility,
+} from "./site-config";
 
 export const siteTextsQuery = queryOptions({
   queryKey: ["site-texts"],
@@ -14,6 +21,9 @@ type Ctx = {
   styles: Record<string, TextStyle>;
   images: Record<string, string>;
   typography: Typography;
+  maintenance: MaintenanceConfig;
+  pageVisibility: PageVisibility;
+  buttons: CustomButtonMap;
 };
 
 const SiteTextContext = createContext<Ctx>({
@@ -21,7 +31,11 @@ const SiteTextContext = createContext<Ctx>({
   styles: {},
   images: {},
   typography: TYPOGRAPHY_DEFAULT,
+  maintenance: MAINTENANCE_DEFAULT,
+  pageVisibility: {},
+  buttons: {},
 });
+
 
 export function styleToCss(s: TextStyle | undefined): CSSProperties {
   if (!s) return {};
