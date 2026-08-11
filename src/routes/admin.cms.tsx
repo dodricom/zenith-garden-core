@@ -971,7 +971,228 @@ function CmsPage() {
                 peuvent pas être supprimées, mais elles peuvent être renommées et réordonnées.
               </p>
             </div>
+          ) : tab === "buttons" ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-white/50">
+                  Boutons personnalisés affichés en bas de la page <strong>{pageName}</strong>.
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => void addButton()} className="btn-gradient inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold">
+                    <Plus className="h-3.5 w-3.5" /> Ajouter un bouton
+                  </button>
+                  <button onClick={() => void saveButtons()} className={btnCls}>
+                    <Save className="h-3.5 w-3.5" /> Enregistrer les boutons
+                  </button>
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {(buttons[pageSlug] ?? []).map((b) => (
+                  <div key={b.id} className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+                    <input
+                      value={b.label}
+                      onChange={(e) => void updateButton(b.id, { label: e.target.value })}
+                      placeholder="Texte du bouton"
+                      className={inputCls}
+                    />
+                    <input
+                      value={b.url}
+                      onChange={(e) => void updateButton(b.id, { url: e.target.value })}
+                      placeholder="/contact ou https://…"
+                      className={inputCls}
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        value={b.variant ?? "primary"}
+                        onChange={(e) => void updateButton(b.id, { variant: e.target.value as CustomButton["variant"] })}
+                        className={chipCls}
+                      >
+                        <option value="primary">Bouton plein</option>
+                        <option value="ghost">Bouton contour</option>
+                      </select>
+                      <select
+                        value={b.align ?? "left"}
+                        onChange={(e) => void updateButton(b.id, { align: e.target.value as CustomButton["align"] })}
+                        className={chipCls}
+                      >
+                        <option value="left">Gauche</option>
+                        <option value="center">Centre</option>
+                        <option value="right">Droite</option>
+                      </select>
+                      <button
+                        onClick={() => void deleteButton(b.id)}
+                        className="ml-auto rounded-xl border border-rose-400/30 px-3 py-2 text-xs text-rose-200 hover:bg-rose-400/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {(buttons[pageSlug] ?? []).length === 0 && (
+                  <p className="text-sm text-white/50">Aucun bouton sur cette page pour le moment.</p>
+                )}
+              </div>
+            </div>
+          ) : tab === "maintenance" ? (
+            <div className="grid max-w-2xl gap-5">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                <div>
+                  <p className="text-sm font-semibold text-white">Mode maintenance</p>
+                  <p className="text-xs text-white/50">
+                    Quand il est activé, les visiteurs voient uniquement l'écran de maintenance. Les personnes connectées
+                    gardent l'accès au site et au back-office.
+                  </p>
+                </div>
+                <button
+                  onClick={() => void patchMaintenance({ enabled: !maintenance.enabled })}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                    maintenance.enabled
+                      ? "border-rose-400/40 bg-rose-400/10 text-rose-200"
+                      : "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                  }`}
+                >
+                  {maintenance.enabled ? "Activé" : "Désactivé"}
+                </button>
+              </div>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">Titre</span>
+                <input
+                  value={maintenance.title}
+                  onChange={(e) => setMaintenance((p) => ({ ...p, title: e.target.value }))}
+                  onBlur={() => void patchMaintenance({})}
+                  className={inputCls}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                  Sous-titre
+                </span>
+                <input
+                  value={maintenance.subtitle}
+                  onChange={(e) => setMaintenance((p) => ({ ...p, subtitle: e.target.value }))}
+                  onBlur={() => void patchMaintenance({})}
+                  className={inputCls}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                  Fin du compte à rebours
+                </span>
+                <input
+                  type="datetime-local"
+                  value={maintenance.targetAt ? maintenance.targetAt.slice(0, 16) : ""}
+                  onChange={(e) =>
+                    void patchMaintenance({
+                      targetAt: e.target.value ? new Date(e.target.value).toISOString() : null,
+                    })
+                  }
+                  className={inputCls}
+                />
+              </label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/60">Image de fond</p>
+                  <div className="mb-3 aspect-video overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                    {maintenance.backgroundUrl ? (
+                      <img src={maintenance.backgroundUrl} alt="Fond maintenance" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-white/35">Aucune image</div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <label className="btn-gradient inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold">
+                      <Upload className="h-3.5 w-3.5" /> Téléverser
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void uploadMaintenance("backgroundUrl", file);
+                        }}
+                      />
+                    </label>
+                    {maintenance.backgroundUrl && (
+                      <button onClick={() => void patchMaintenance({ backgroundUrl: null })} className={btnCls}>
+                        Retirer
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/60">Logo</p>
+                  <div className="mb-3 grid aspect-video place-items-center overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                    {maintenance.logoUrl ? (
+                      <img
+                        src={maintenance.logoUrl}
+                        alt="Logo maintenance"
+                        style={{ height: `${maintenance.logoSize}px` }}
+                        className="w-auto object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs text-white/35">Aucun logo</span>
+                    )}
+                  </div>
+                  <div className="mb-3 flex gap-2">
+                    <label className="btn-gradient inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold">
+                      <Upload className="h-3.5 w-3.5" /> Téléverser
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void uploadMaintenance("logoUrl", file);
+                        }}
+                      />
+                    </label>
+                    {maintenance.logoUrl && (
+                      <button onClick={() => void patchMaintenance({ logoUrl: null })} className={btnCls}>
+                        Retirer
+                      </button>
+                    )}
+                  </div>
+                  <label className="block text-[11px] text-white/50">
+                    Taille du logo — {maintenance.logoSize} px
+                    <input
+                      type="range"
+                      min={32}
+                      max={240}
+                      step={4}
+                      value={maintenance.logoSize}
+                      onChange={(e) => setMaintenance((p) => ({ ...p, logoSize: Number(e.target.value) }))}
+                      onMouseUp={() => void patchMaintenance({})}
+                      onTouchEnd={() => void patchMaintenance({})}
+                      className="mt-1 w-full"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {snapshots.length > 0 && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                    Sauvegardes récentes
+                  </p>
+                  <div className="space-y-1">
+                    {snapshots.map((s) => (
+                      <div key={s.at} className="flex items-center justify-between gap-3 text-xs text-white/60">
+                        <span>{new Date(s.at).toLocaleString("fr-FR")}</span>
+                        <button onClick={() => void restoreSnapshot(s)} className={btnCls}>
+                          <History className="h-3.5 w-3.5" /> Restaurer
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ) : tab === "partners" ? (
+
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-white/50">
