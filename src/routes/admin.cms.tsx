@@ -448,6 +448,14 @@ function CmsPage() {
     return signed.data.signedUrl;
   };
 
+  const uploadMaintenance = async (kind: "backgroundUrl" | "logoUrl", file: File) => {
+    setError(null);
+    const url = await uploadToCms(`maintenance/${kind}-${Date.now()}-${file.name.replace(/\s+/g, "_")}`, file);
+    if (url) await patchMaintenance({ [kind]: url } as Partial<MaintenanceConfig>);
+  };
+
+
+
   const uploadImage = async (key: string, file: File) => {
     setError(null);
     const path = `${pageSlug}/${key.replace(/\./g, "-")}-${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
