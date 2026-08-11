@@ -151,7 +151,17 @@ function CmsPage() {
     const [texts, imgs, settings, pagesRes, partnersRes] = await Promise.all([
       supabase.from("content_texts").select("page_slug, text_key, value, style"),
       supabase.from("content_images").select("page_slug, image_key, url"),
-      supabase.from("site_settings").select("key, value").in("key", ["typography", "cms_custom_fields"]),
+      supabase
+        .from("site_settings")
+        .select("key, value")
+        .in("key", [
+          "typography",
+          "cms_custom_fields",
+          "maintenance",
+          "page_visibility",
+          "cms_custom_buttons",
+          "cms_snapshots",
+        ]),
       supabase.from("pages").select("id, slug, title, sort_order").order("sort_order"),
       supabase.from("partners").select("id, name, logo_url, website_url, sort_order").order("sort_order"),
     ]);
@@ -164,16 +174,29 @@ function CmsPage() {
     }
     const im: Record<string, string> = {};
     for (const row of imgs.data ?? []) if (row.url) im[`${row.page_slug}.${row.image_key}`] = row.url;
-    const typoRow = (settings.data ?? []).find((s) => s.key === "typography");
-    const customRow = (settings.data ?? []).find((s) => s.key === "cms_custom_fields");
+    const setting = (k: string) => (settings.data ?? []).find((s) => s.key === k)?.value;
     setValues(v);
     setStyles(st);
     setImages(im);
-    setTypo({ ...TYPOGRAPHY_DEFAULT, ...((typoRow?.value as Partial<Typography>) ?? {}) });
-    setCustomFields(((customRow?.value as CustomFieldMap) ?? {}) as CustomFieldMap);
+    setTypo({ ...TYPOGRAPHY_DEFAULT, ...((setting("typography") as Partial<Typography>) ?? {}) });
+    setCustomFields(((setting("cms_custom_fields") as CustomFieldMap) ?? {}) as CustomFieldMap);
+    setMaintenance({ ...MAINTENANCE_DEFAULT, ...((setting("maintenance") as Partial<MaintenanceConfig>) ?? {}) });
+    setVisibility(((setting("page_visibility") as PageVisibility) ?? {}) as PageVisibility);
+    setButtons(((setting("cms_custom_buttons") as CustomButtonMap) ?? {}) as CustomButtonMap);
+    setSnapshots(((setting("cms_snapshots") as Snapshot[]) ?? []) as Snapshot[]);
     setDbPages((pagesRes.data ?? []) as CmsPageRow[]);
     setPartners((partnersRes.data ?? []) as PartnerRow[]);
   };
+
+  const putSetting = async (key: string, value: unknown, label: string) => {
+    const { error: err } = await supabase
+      .from("site_settings")
+      .upsert({ key, value: value as never, label }, { onConflict: "key" });
+    if (err) setError(err.message);
+  };
+
+  const refreshSite = () => queryClient.invalidateQueries({ queryKey: ["site-texts"] });
+
 
   useEffect(() => {
     let alive = true;
