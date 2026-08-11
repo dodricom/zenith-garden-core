@@ -251,6 +251,66 @@ export const runCmsAi = createServerFn({ method: "POST" })
           applied.push(`Page « ${action.slug} » supprimée`);
           break;
         }
+        case "pageVisibility": {
+          visibility = { ...visibility, [action.slug]: action.visible };
+          dirtyVisibility = true;
+          applied.push(`Page « ${action.slug} » ${action.visible ? "affichée" : "masquée"}`);
+          break;
+        }
+        case "buttonAdd": {
+          const btn: CustomButton = {
+            id: `btn-${Date.now().toString(36)}-${Math.random().toString(36).slice(-3)}`,
+            label: action.label,
+            url: action.url,
+            variant: action.variant ?? "primary",
+            align: action.align ?? "left",
+          };
+          pageButtons = { ...pageButtons, [pageSlug]: [...(pageButtons[pageSlug] ?? []), btn] };
+          dirtyButtons = true;
+          applied.push(`Bouton « ${action.label} » créé`);
+          break;
+        }
+        case "buttonUpdate": {
+          pageButtons = {
+            ...pageButtons,
+            [pageSlug]: (pageButtons[pageSlug] ?? []).map((b) =>
+              b.label.toLowerCase() === action.label.toLowerCase()
+                ? {
+                    ...b,
+                    ...(action.newLabel ? { label: action.newLabel } : {}),
+                    ...(action.url ? { url: action.url } : {}),
+                    ...(action.variant ? { variant: action.variant } : {}),
+                    ...(action.align ? { align: action.align } : {}),
+                  }
+                : b,
+            ),
+          };
+          dirtyButtons = true;
+          applied.push(`Bouton « ${action.label} » modifié`);
+          break;
+        }
+        case "buttonDelete": {
+          pageButtons = {
+            ...pageButtons,
+            [pageSlug]: (pageButtons[pageSlug] ?? []).filter((b) => b.label.toLowerCase() !== action.label.toLowerCase()),
+          };
+          dirtyButtons = true;
+          applied.push(`Bouton « ${action.label} » supprimé`);
+          break;
+        }
+        case "maintenance": {
+          maintenance = {
+            ...maintenance,
+            ...(action.enabled !== undefined ? { enabled: action.enabled } : {}),
+            ...(action.title ? { title: action.title } : {}),
+            ...(action.subtitle ? { subtitle: action.subtitle } : {}),
+            ...(action.targetAt ? { targetAt: action.targetAt } : {}),
+            ...(action.logoSize ? { logoSize: action.logoSize } : {}),
+          };
+          dirtyMaintenance = true;
+          applied.push("Page de maintenance mise à jour");
+          break;
+        }
         default:
           break;
       }
@@ -264,6 +324,19 @@ export const runCmsAi = createServerFn({ method: "POST" })
           { onConflict: "key" },
         );
     }
+    if (dirtyVisibility)
+      await supabase
+        .from("site_settings")
+        .upsert({ key: "page_visibility", value: visibility as never, label: "Visibilité des pages" }, { onConflict: "key" });
+    if (dirtyButtons)
+      await supabase
+        .from("site_settings")
+        .upsert({ key: "cms_custom_buttons", value: pageButtons as never, label: "Boutons personnalisés" }, { onConflict: "key" });
+    if (dirtyMaintenance)
+      await supabase
+        .from("site_settings")
+        .upsert({ key: "maintenance", value: maintenance as never, label: "Mode maintenance" }, { onConflict: "key" });
+
 
     return { summary: parsed.summary ?? "Modifications appliquées.", applied, actions };
   });
