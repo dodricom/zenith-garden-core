@@ -573,10 +573,14 @@ function CmsPage() {
     { id: "ai", label: "IA", icon: Sparkles },
     { id: "images", label: "Images", icon: ImageIcon },
     { id: "pages", label: "Pages", icon: Layers },
+    { id: "buttons", label: "Boutons", icon: MousePointerClick },
     { id: "partners", label: "Partenaires", icon: Handshake },
+    { id: "maintenance", label: "Maintenance", icon: Wrench },
     { id: "typo", label: "Typographie", icon: Settings2 },
     { id: "code", label: "Mode code", icon: Code2 },
   ];
+  const lastSnapshot = snapshots[0];
+
 
   return (
     <AdminShell title="Website Builder (CMS)" breadcrumbs={[{ label: "Website Builder (CMS)" }]}>
