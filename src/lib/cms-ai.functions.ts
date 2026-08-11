@@ -1,6 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { TEXT_PAGES, type TextField, type TextStyle, type Typography } from "./site-text";
+import {
+  MAINTENANCE_DEFAULT,
+  type CustomButton,
+  type CustomButtonMap,
+  type MaintenanceConfig,
+  type PageVisibility,
+} from "./site-config";
 
 export type CmsAiAction =
   | { type: "text"; key: string; value: string }
@@ -12,11 +19,24 @@ export type CmsAiAction =
   | { type: "partnerDelete"; name: string }
   | { type: "pageAdd"; title: string }
   | { type: "pageRename"; slug: string; title: string }
-  | { type: "pageDelete"; slug: string };
+  | { type: "pageDelete"; slug: string }
+  | { type: "pageVisibility"; slug: string; visible: boolean }
+  | { type: "buttonAdd"; label: string; url: string; variant?: "primary" | "ghost"; align?: "left" | "center" | "right" }
+  | { type: "buttonUpdate"; label: string; newLabel?: string; url?: string; variant?: "primary" | "ghost"; align?: "left" | "center" | "right" }
+  | { type: "buttonDelete"; label: string }
+  | {
+      type: "maintenance";
+      enabled?: boolean;
+      title?: string;
+      subtitle?: string;
+      targetAt?: string;
+      logoSize?: number;
+    };
 
 export type CmsAiResult = { summary: string; applied: string[]; actions: CmsAiAction[] };
 
 type CustomFieldMap = Record<string, TextField[]>;
+
 
 function slugify(v: string) {
   return v
