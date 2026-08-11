@@ -143,6 +143,10 @@ export const runCmsAi = createServerFn({ method: "POST" })
     const parsed = extractJson(raw);
     const actions = (parsed.actions ?? []) as CmsAiAction[];
     const applied: string[] = [];
+    let dirtyVisibility = false;
+    let dirtyButtons = false;
+    let dirtyMaintenance = false;
+
     let nextCustom = customFields;
 
     for (const action of actions) {
