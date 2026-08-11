@@ -68,8 +68,14 @@ Actions possibles :
 - {"type":"partnerAdd","name":"Orange","websiteUrl":"https://..."}
 - {"type":"partnerDelete","name":"Orange"}
 - {"type":"pageAdd","title":"Tarifs"} / {"type":"pageRename","slug":"tarifs","title":"Nos tarifs"} / {"type":"pageDelete","slug":"tarifs"}
+- {"type":"pageVisibility","slug":"blog","visible":false} affiche ou masque une page dans le site public
+- {"type":"buttonAdd","label":"Demander un devis","url":"/contact","variant":"primary","align":"center"} crée un bouton sur la page courante
+- {"type":"buttonUpdate","label":"Demander un devis","newLabel":"Nous écrire","url":"/contact"} modifie un bouton existant
+- {"type":"buttonDelete","label":"Demander un devis"}
+- {"type":"maintenance","enabled":true,"title":"Something is Happening!","subtitle":"...","targetAt":"2026-01-31T18:00:00.000Z","logoSize":90} pilote la page de maintenance et son compte à rebours
 
 Règles : n'utilise que des clés existantes pour "text"/"style". Écris des textes en français, courts et percutants. Si la demande est ambiguë, fais la meilleure interprétation possible. Ne renvoie jamais d'explication hors du JSON.`;
+
 
 export const runCmsAi = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
