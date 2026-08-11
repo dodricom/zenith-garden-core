@@ -91,13 +91,19 @@ export const runCmsAi = createServerFn({ method: "POST" })
 
     const [textsRes, settingsRes, pagesRes, partnersRes] = await Promise.all([
       supabase.from("content_texts").select("text_key, value, style").eq("page_slug", pageSlug),
-      supabase.from("site_settings").select("key, value").in("key", ["typography", "cms_custom_fields"]),
+      supabase
+        .from("site_settings")
+        .select("key, value")
+        .in("key", ["typography", "cms_custom_fields", "page_visibility", "cms_custom_buttons", "maintenance"]),
       supabase.from("pages").select("slug, title, sort_order").order("sort_order"),
       supabase.from("partners").select("id, name").order("sort_order"),
     ]);
 
-    const customFields = ((settingsRes.data ?? []).find((s) => s.key === "cms_custom_fields")?.value ??
-      {}) as CustomFieldMap;
+    const setting = (k: string) => (settingsRes.data ?? []).find((s) => s.key === k)?.value;
+    const customFields = (setting("cms_custom_fields") ?? {}) as CustomFieldMap;
+    let visibility = (setting("page_visibility") ?? {}) as PageVisibility;
+    let pageButtons = (setting("cms_custom_buttons") ?? {}) as CustomButtonMap;
+    let maintenance = { ...MAINTENANCE_DEFAULT, ...((setting("maintenance") ?? {}) as Partial<MaintenanceConfig>) };
     const staticFields = TEXT_PAGES.find((p) => p.slug === pageSlug)?.fields ?? [];
     const fields = [...staticFields, ...(customFields[pageSlug] ?? [])];
     const values = new Map((textsRes.data ?? []).map((r) => [r.text_key, r.value as string]));
@@ -105,9 +111,12 @@ export const runCmsAi = createServerFn({ method: "POST" })
     const ctxDoc = {
       pageCourante: pageSlug,
       champs: fields.map((f) => ({ key: f.key, label: f.label, valeur: values.get(f.key) ?? f.def })),
-      pages: (pagesRes.data ?? []).map((p) => ({ slug: p.slug, titre: p.title })),
+      pages: (pagesRes.data ?? []).map((p) => ({ slug: p.slug, titre: p.title, visible: visibility[p.slug] !== false })),
       partenaires: (partnersRes.data ?? []).map((p) => p.name),
+      boutons: pageButtons[pageSlug] ?? [],
+      maintenance,
     };
+
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
