@@ -71,7 +71,17 @@ export function SiteTextProvider({ children }: { children: ReactNode }) {
       if (row.url) images[`${row.pageSlug}.${row.imageKey}`] = row.url;
     }
     const typography: Typography = { ...TYPOGRAPHY_DEFAULT, ...(data?.typography ?? {}) };
-    return { texts, styles, images, typography };
+    const maintenance: MaintenanceConfig = { ...MAINTENANCE_DEFAULT, ...(data?.maintenance ?? {}) };
+    return {
+      texts,
+      styles,
+      images,
+      typography,
+      maintenance,
+      pageVisibility: data?.pageVisibility ?? {},
+      buttons: data?.buttons ?? {},
+    };
+
   }, [data]);
 
   const { fontDisplay, fontBody, scale } = value.typography;
