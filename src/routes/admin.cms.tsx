@@ -296,10 +296,59 @@ function CmsPage() {
     }
   };
 
+  // ---- sauvegardes (snapshots) ----------------------------------------
+  const takeSnapshot = async (): Promise<Snapshot[]> => {
+    const { data } = await supabase.from("content_texts").select("page_slug, text_key, value, style");
+    const snap: Snapshot = {
+      at: new Date().toISOString(),
+      texts: ((data ?? []) as { page_slug: string; text_key: string; value: string; style: TextStyle }[]).map((r) => ({
+        page_slug: r.page_slug,
+        text_key: r.text_key,
+        value: r.value,
+        style: (r.style ?? {}) as TextStyle,
+      })),
+      typography: typo,
+      customFields,
+      pageVisibility: visibility,
+      buttons,
+      maintenance,
+    };
+    const next = [snap, ...snapshots].slice(0, 10);
+    setSnapshots(next);
+    await putSetting("cms_snapshots", next, "Sauvegardes automatiques du CMS");
+    return next;
+  };
+
+  const restoreSnapshot = async (snap: Snapshot) => {
+    if (!confirm(`Restaurer la sauvegarde du ${new Date(snap.at).toLocaleString("fr-FR")} ?`)) return;
+    setSaving(true);
+    setError(null);
+    if (snap.texts.length) {
+      const { error: err } = await supabase
+        .from("content_texts")
+        .upsert(
+          snap.texts.map((t) => ({ page_slug: t.page_slug, text_key: t.text_key, value: t.value, style: t.style as never })),
+          { onConflict: "page_slug,text_key" },
+        );
+      if (err) setError(err.message);
+    }
+    await Promise.all([
+      putSetting("typography", snap.typography, "Typographie du site"),
+      putSetting("cms_custom_fields", snap.customFields ?? {}, "Champs texte personnalisés"),
+      putSetting("page_visibility", snap.pageVisibility ?? {}, "Visibilité des pages"),
+      putSetting("cms_custom_buttons", snap.buttons ?? {}, "Boutons personnalisés"),
+      putSetting("maintenance", snap.maintenance ?? MAINTENANCE_DEFAULT, "Mode maintenance"),
+    ]);
+    await reload();
+    await refreshSite();
+    setSaving(false);
+  };
+
   // ---- persistence -----------------------------------------------------
   const save = async () => {
     setSaving(true);
     setError(null);
+    await takeSnapshot();
     const rows = pageFields.map((f) => ({
       page_slug: pageSlug,
       text_key: f.key,
@@ -308,19 +357,20 @@ function CmsPage() {
     }));
     const { error: err } = await supabase.from("content_texts").upsert(rows, { onConflict: "page_slug,text_key" });
     if (!err) {
-      const { error: sErr } = await supabase
-        .from("site_settings")
-        .upsert({ key: "typography", value: typo as never, label: "Typographie du site" }, { onConflict: "key" });
-      if (sErr) setError(sErr.message);
+      await putSetting("typography", typo, "Typographie du site");
+      await putSetting("page_visibility", visibility, "Visibilité des pages");
+      await putSetting("cms_custom_buttons", buttons, "Boutons personnalisés");
+      await putSetting("maintenance", maintenance, "Mode maintenance");
       await persistCustomFields(customFields);
     }
     setSaving(false);
     if (err) return setError(err.message);
     setSaved(true);
-    await queryClient.invalidateQueries({ queryKey: ["site-texts"] });
+    await refreshSite();
   };
 
   const resetPage = () => {
+    if (!confirm("Rétablir les textes et styles d'origine de cette page ?")) return;
     setSaved(false);
     setValues((p) => {
       const next = { ...p };
@@ -333,6 +383,55 @@ function CmsPage() {
       return next;
     });
   };
+
+  // ---- visibilité des pages / boutons ----------------------------------
+  const toggleVisibility = async (slug: string) => {
+    const next = { ...visibility, [slug]: visibility[slug] === false };
+    setVisibility(next);
+    await putSetting("page_visibility", next, "Visibilité des pages");
+    await refreshSite();
+  };
+
+  const persistButtons = async (next: CustomButtonMap) => {
+    setButtons(next);
+    await putSetting("cms_custom_buttons", next, "Boutons personnalisés");
+    await refreshSite();
+  };
+
+  const addButton = async () => {
+    const list = buttons[pageSlug] ?? [];
+    const btn: CustomButton = {
+      id: `btn-${Date.now().toString(36)}`,
+      label: "Nouveau bouton",
+      url: "/contact",
+      variant: "primary",
+      align: "left",
+    };
+    await persistButtons({ ...buttons, [pageSlug]: [...list, btn] });
+  };
+
+  const updateButton = async (id: string, patch: Partial<CustomButton>) => {
+    const next = {
+      ...buttons,
+      [pageSlug]: (buttons[pageSlug] ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    };
+    setButtons(next);
+  };
+
+  const saveButtons = async () => persistButtons(buttons);
+
+  const deleteButton = async (id: string) => {
+    await persistButtons({ ...buttons, [pageSlug]: (buttons[pageSlug] ?? []).filter((b) => b.id !== id) });
+  };
+
+  // ---- maintenance -----------------------------------------------------
+  const patchMaintenance = async (patch: Partial<MaintenanceConfig>) => {
+    const next = { ...maintenance, ...patch };
+    setMaintenance(next);
+    await putSetting("maintenance", next, "Mode maintenance");
+    await refreshSite();
+  };
+
 
   // ---- images ----------------------------------------------------------
   const uploadToCms = async (path: string, file: File) => {
