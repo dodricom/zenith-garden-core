@@ -35,8 +35,8 @@ export function PartnersStrip({ className = "" }: { className?: string }) {
   const items = [...partners, ...partners];
 
   return (
-    <section aria-label="Nos partenaires" className={`pointer-events-auto w-full bg-black ${className}`}>
-      <div className="border-y border-white/[0.06]">
+    <section aria-label="Nos partenaires" className={`pointer-events-auto w-full  ${className}`}>
+      <div>
         <div className="logo-marquee mx-auto max-w-[1400px] px-4 py-6 sm:py-8">
           <div className="logo-marquee-track flex w-max items-center gap-14 sm:gap-20">
             {items.map((p, i) => (
