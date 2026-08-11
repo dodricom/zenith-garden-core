@@ -2,6 +2,13 @@ import { createContext, useContext, useMemo, type CSSProperties, type ReactNode 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { getSiteContent } from "./site-text.functions";
 import { TEXT_DEFAULTS, TYPOGRAPHY_DEFAULT, type TextStyle, type Typography } from "./site-text";
+import {
+  MAINTENANCE_DEFAULT,
+  type CustomButton,
+  type CustomButtonMap,
+  type MaintenanceConfig,
+  type PageVisibility,
+} from "./site-config";
 
 export const siteTextsQuery = queryOptions({
   queryKey: ["site-texts"],
@@ -14,6 +21,9 @@ type Ctx = {
   styles: Record<string, TextStyle>;
   images: Record<string, string>;
   typography: Typography;
+  maintenance: MaintenanceConfig;
+  pageVisibility: PageVisibility;
+  buttons: CustomButtonMap;
 };
 
 const SiteTextContext = createContext<Ctx>({
@@ -21,7 +31,11 @@ const SiteTextContext = createContext<Ctx>({
   styles: {},
   images: {},
   typography: TYPOGRAPHY_DEFAULT,
+  maintenance: MAINTENANCE_DEFAULT,
+  pageVisibility: {},
+  buttons: {},
 });
+
 
 export function styleToCss(s: TextStyle | undefined): CSSProperties {
   if (!s) return {};
@@ -57,7 +71,17 @@ export function SiteTextProvider({ children }: { children: ReactNode }) {
       if (row.url) images[`${row.pageSlug}.${row.imageKey}`] = row.url;
     }
     const typography: Typography = { ...TYPOGRAPHY_DEFAULT, ...(data?.typography ?? {}) };
-    return { texts, styles, images, typography };
+    const maintenance: MaintenanceConfig = { ...MAINTENANCE_DEFAULT, ...(data?.maintenance ?? {}) };
+    return {
+      texts,
+      styles,
+      images,
+      typography,
+      maintenance,
+      pageVisibility: data?.pageVisibility ?? {},
+      buttons: data?.buttons ?? {},
+    };
+
   }, [data]);
 
   const { fontDisplay, fontBody, scale } = value.typography;
@@ -131,11 +155,30 @@ export function useCustomTexts(pageSlug: string) {
     .map((id) => ({ id, value: texts[id]!, style: styles[id] }));
 }
 
-/** Bloc affichant les textes libres ajoutés dans le CMS (section « Textes libres »). */
+/** Réglages globaux (maintenance, visibilité des pages, boutons). */
+export function useSiteConfig() {
+  const { maintenance, pageVisibility, buttons } = useContext(SiteTextContext);
+  return { maintenance, pageVisibility, buttons };
+}
+
+/** Une page est visible tant qu'elle n'a pas été explicitement masquée dans le CMS. */
+export function usePageVisible(slug: string) {
+  const { pageVisibility } = useContext(SiteTextContext);
+  return pageVisibility[slug] !== false;
+}
+
+/** Boutons personnalisés créés depuis le CMS / l'IA pour une page. */
+export function useCustomButtons(pageSlug: string): CustomButton[] {
+  const { buttons } = useContext(SiteTextContext);
+  return buttons[pageSlug] ?? [];
+}
+
+/** Bloc affichant les textes libres et boutons ajoutés dans le CMS. */
 export function CustomTexts({ page }: { page: string }) {
   const items = useCustomTexts(page);
+  const btns = useCustomButtons(page);
   const visible = items.filter((i) => !i.style?.hidden);
-  if (visible.length === 0) return null;
+  if (visible.length === 0 && btns.length === 0) return null;
   return (
     <section className="relative mx-auto max-w-7xl px-5 pb-24 lg:px-8">
       <div className="glass space-y-4 p-8">
@@ -144,7 +187,29 @@ export function CustomTexts({ page }: { page: string }) {
             {i.value}
           </p>
         ))}
+        {btns.length > 0 && (
+          <div
+            className={`flex flex-wrap gap-3 ${
+              btns[0]?.align === "center" ? "justify-center" : btns[0]?.align === "right" ? "justify-end" : ""
+            }`}
+          >
+            {btns.map((b) => (
+              <a
+                key={b.id}
+                href={b.url || "#"}
+                className={
+                  b.variant === "ghost"
+                    ? "btn-ghost-glow inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+                    : "btn-gradient inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+                }
+              >
+                {b.label}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
+

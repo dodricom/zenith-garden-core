@@ -6,10 +6,14 @@ import {
   ArrowUp,
   Check,
   Code2,
+  Eye,
+  EyeOff,
   Handshake,
+  History,
   Image as ImageIcon,
   Layers,
   Loader2,
+  MousePointerClick,
   Plus,
   RotateCcw,
   Save,
@@ -20,6 +24,7 @@ import {
   Trash2,
   Type,
   Upload,
+  Wrench,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,13 +39,30 @@ import {
   type TextStyle,
   type Typography,
 } from "@/lib/site-text";
+import {
+  MAINTENANCE_DEFAULT,
+  type CustomButton,
+  type CustomButtonMap,
+  type MaintenanceConfig,
+  type PageVisibility,
+} from "@/lib/site-config";
 
 export const Route = createFileRoute("/admin/cms")({ component: CmsPage });
 
-type Tab = "texts" | "ai" | "images" | "pages" | "partners" | "typo" | "code";
+type Tab = "texts" | "ai" | "images" | "pages" | "buttons" | "partners" | "maintenance" | "typo" | "code";
 type CmsPageRow = { id: string; slug: string; title: string; sort_order: number };
 type PartnerRow = { id: string; name: string; logo_url: string | null; website_url: string | null; sort_order: number };
 type CustomFieldMap = Record<string, TextField[]>;
+type Snapshot = {
+  at: string;
+  texts: { page_slug: string; text_key: string; value: string; style: TextStyle }[];
+  typography: Typography;
+  customFields: CustomFieldMap;
+  pageVisibility: PageVisibility;
+  buttons: CustomButtonMap;
+  maintenance: MaintenanceConfig;
+};
+
 
 const inputCls =
   "w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-[color:var(--brand-violet)]/60";
@@ -69,6 +91,11 @@ function CmsPage() {
   const [customFields, setCustomFields] = useState<CustomFieldMap>({});
   const [dbPages, setDbPages] = useState<CmsPageRow[]>([]);
   const [partners, setPartners] = useState<PartnerRow[]>([]);
+  const [visibility, setVisibility] = useState<PageVisibility>({});
+  const [maintenance, setMaintenance] = useState<MaintenanceConfig>(MAINTENANCE_DEFAULT);
+  const [buttons, setButtons] = useState<CustomButtonMap>({});
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+
   const [openStyle, setOpenStyle] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -124,7 +151,17 @@ function CmsPage() {
     const [texts, imgs, settings, pagesRes, partnersRes] = await Promise.all([
       supabase.from("content_texts").select("page_slug, text_key, value, style"),
       supabase.from("content_images").select("page_slug, image_key, url"),
-      supabase.from("site_settings").select("key, value").in("key", ["typography", "cms_custom_fields"]),
+      supabase
+        .from("site_settings")
+        .select("key, value")
+        .in("key", [
+          "typography",
+          "cms_custom_fields",
+          "maintenance",
+          "page_visibility",
+          "cms_custom_buttons",
+          "cms_snapshots",
+        ]),
       supabase.from("pages").select("id, slug, title, sort_order").order("sort_order"),
       supabase.from("partners").select("id, name, logo_url, website_url, sort_order").order("sort_order"),
     ]);
@@ -137,16 +174,29 @@ function CmsPage() {
     }
     const im: Record<string, string> = {};
     for (const row of imgs.data ?? []) if (row.url) im[`${row.page_slug}.${row.image_key}`] = row.url;
-    const typoRow = (settings.data ?? []).find((s) => s.key === "typography");
-    const customRow = (settings.data ?? []).find((s) => s.key === "cms_custom_fields");
+    const setting = (k: string) => (settings.data ?? []).find((s) => s.key === k)?.value;
     setValues(v);
     setStyles(st);
     setImages(im);
-    setTypo({ ...TYPOGRAPHY_DEFAULT, ...((typoRow?.value as Partial<Typography>) ?? {}) });
-    setCustomFields(((customRow?.value as CustomFieldMap) ?? {}) as CustomFieldMap);
+    setTypo({ ...TYPOGRAPHY_DEFAULT, ...((setting("typography") as Partial<Typography>) ?? {}) });
+    setCustomFields(((setting("cms_custom_fields") as CustomFieldMap) ?? {}) as CustomFieldMap);
+    setMaintenance({ ...MAINTENANCE_DEFAULT, ...((setting("maintenance") as Partial<MaintenanceConfig>) ?? {}) });
+    setVisibility(((setting("page_visibility") as PageVisibility) ?? {}) as PageVisibility);
+    setButtons(((setting("cms_custom_buttons") as CustomButtonMap) ?? {}) as CustomButtonMap);
+    setSnapshots(((setting("cms_snapshots") as Snapshot[]) ?? []) as Snapshot[]);
     setDbPages((pagesRes.data ?? []) as CmsPageRow[]);
     setPartners((partnersRes.data ?? []) as PartnerRow[]);
   };
+
+  const putSetting = async (key: string, value: unknown, label: string) => {
+    const { error: err } = await supabase
+      .from("site_settings")
+      .upsert({ key, value: value as never, label }, { onConflict: "key" });
+    if (err) setError(err.message);
+  };
+
+  const refreshSite = () => queryClient.invalidateQueries({ queryKey: ["site-texts"] });
+
 
   useEffect(() => {
     let alive = true;
@@ -246,10 +296,59 @@ function CmsPage() {
     }
   };
 
+  // ---- sauvegardes (snapshots) ----------------------------------------
+  const takeSnapshot = async (): Promise<Snapshot[]> => {
+    const { data } = await supabase.from("content_texts").select("page_slug, text_key, value, style");
+    const snap: Snapshot = {
+      at: new Date().toISOString(),
+      texts: ((data ?? []) as { page_slug: string; text_key: string; value: string; style: TextStyle }[]).map((r) => ({
+        page_slug: r.page_slug,
+        text_key: r.text_key,
+        value: r.value,
+        style: (r.style ?? {}) as TextStyle,
+      })),
+      typography: typo,
+      customFields,
+      pageVisibility: visibility,
+      buttons,
+      maintenance,
+    };
+    const next = [snap, ...snapshots].slice(0, 10);
+    setSnapshots(next);
+    await putSetting("cms_snapshots", next, "Sauvegardes automatiques du CMS");
+    return next;
+  };
+
+  const restoreSnapshot = async (snap: Snapshot) => {
+    if (!confirm(`Restaurer la sauvegarde du ${new Date(snap.at).toLocaleString("fr-FR")} ?`)) return;
+    setSaving(true);
+    setError(null);
+    if (snap.texts.length) {
+      const { error: err } = await supabase
+        .from("content_texts")
+        .upsert(
+          snap.texts.map((t) => ({ page_slug: t.page_slug, text_key: t.text_key, value: t.value, style: t.style as never })),
+          { onConflict: "page_slug,text_key" },
+        );
+      if (err) setError(err.message);
+    }
+    await Promise.all([
+      putSetting("typography", snap.typography, "Typographie du site"),
+      putSetting("cms_custom_fields", snap.customFields ?? {}, "Champs texte personnalisés"),
+      putSetting("page_visibility", snap.pageVisibility ?? {}, "Visibilité des pages"),
+      putSetting("cms_custom_buttons", snap.buttons ?? {}, "Boutons personnalisés"),
+      putSetting("maintenance", snap.maintenance ?? MAINTENANCE_DEFAULT, "Mode maintenance"),
+    ]);
+    await reload();
+    await refreshSite();
+    setSaving(false);
+  };
+
   // ---- persistence -----------------------------------------------------
   const save = async () => {
     setSaving(true);
     setError(null);
+    await takeSnapshot();
     const rows = pageFields.map((f) => ({
       page_slug: pageSlug,
       text_key: f.key,
@@ -258,19 +357,20 @@ function CmsPage() {
     }));
     const { error: err } = await supabase.from("content_texts").upsert(rows, { onConflict: "page_slug,text_key" });
     if (!err) {
-      const { error: sErr } = await supabase
-        .from("site_settings")
-        .upsert({ key: "typography", value: typo as never, label: "Typographie du site" }, { onConflict: "key" });
-      if (sErr) setError(sErr.message);
+      await putSetting("typography", typo, "Typographie du site");
+      await putSetting("page_visibility", visibility, "Visibilité des pages");
+      await putSetting("cms_custom_buttons", buttons, "Boutons personnalisés");
+      await putSetting("maintenance", maintenance, "Mode maintenance");
       await persistCustomFields(customFields);
     }
     setSaving(false);
     if (err) return setError(err.message);
     setSaved(true);
-    await queryClient.invalidateQueries({ queryKey: ["site-texts"] });
+    await refreshSite();
   };
 
   const resetPage = () => {
+    if (!confirm("Rétablir les textes et styles d'origine de cette page ?")) return;
     setSaved(false);
     setValues((p) => {
       const next = { ...p };
@@ -283,6 +383,55 @@ function CmsPage() {
       return next;
     });
   };
+
+  // ---- visibilité des pages / boutons ----------------------------------
+  const toggleVisibility = async (slug: string) => {
+    const next = { ...visibility, [slug]: visibility[slug] === false };
+    setVisibility(next);
+    await putSetting("page_visibility", next, "Visibilité des pages");
+    await refreshSite();
+  };
+
+  const persistButtons = async (next: CustomButtonMap) => {
+    setButtons(next);
+    await putSetting("cms_custom_buttons", next, "Boutons personnalisés");
+    await refreshSite();
+  };
+
+  const addButton = async () => {
+    const list = buttons[pageSlug] ?? [];
+    const btn: CustomButton = {
+      id: `btn-${Date.now().toString(36)}`,
+      label: "Nouveau bouton",
+      url: "/contact",
+      variant: "primary",
+      align: "left",
+    };
+    await persistButtons({ ...buttons, [pageSlug]: [...list, btn] });
+  };
+
+  const updateButton = async (id: string, patch: Partial<CustomButton>) => {
+    const next = {
+      ...buttons,
+      [pageSlug]: (buttons[pageSlug] ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    };
+    setButtons(next);
+  };
+
+  const saveButtons = async () => persistButtons(buttons);
+
+  const deleteButton = async (id: string) => {
+    await persistButtons({ ...buttons, [pageSlug]: (buttons[pageSlug] ?? []).filter((b) => b.id !== id) });
+  };
+
+  // ---- maintenance -----------------------------------------------------
+  const patchMaintenance = async (patch: Partial<MaintenanceConfig>) => {
+    const next = { ...maintenance, ...patch };
+    setMaintenance(next);
+    await putSetting("maintenance", next, "Mode maintenance");
+    await refreshSite();
+  };
+
 
   // ---- images ----------------------------------------------------------
   const uploadToCms = async (path: string, file: File) => {
@@ -298,6 +447,14 @@ function CmsPage() {
     }
     return signed.data.signedUrl;
   };
+
+  const uploadMaintenance = async (kind: "backgroundUrl" | "logoUrl", file: File) => {
+    setError(null);
+    const url = await uploadToCms(`maintenance/${kind}-${Date.now()}-${file.name.replace(/\s+/g, "_")}`, file);
+    if (url) await patchMaintenance({ [kind]: url } as Partial<MaintenanceConfig>);
+  };
+
+
 
   const uploadImage = async (key: string, file: File) => {
     setError(null);
@@ -416,10 +573,14 @@ function CmsPage() {
     { id: "ai", label: "IA", icon: Sparkles },
     { id: "images", label: "Images", icon: ImageIcon },
     { id: "pages", label: "Pages", icon: Layers },
+    { id: "buttons", label: "Boutons", icon: MousePointerClick },
     { id: "partners", label: "Partenaires", icon: Handshake },
+    { id: "maintenance", label: "Maintenance", icon: Wrench },
     { id: "typo", label: "Typographie", icon: Settings2 },
     { id: "code", label: "Mode code", icon: Code2 },
   ];
+  const lastSnapshot = snapshots[0];
+
 
   return (
     <AdminShell title="Website Builder (CMS)" breadcrumbs={[{ label: "Website Builder (CMS)" }]}>
@@ -458,9 +619,22 @@ function CmsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={resetPage} className={btnCls}>
-                <RotateCcw className="h-3.5 w-3.5" /> Réinitialiser
+              <button
+                onClick={() => lastSnapshot && void restoreSnapshot(lastSnapshot)}
+                disabled={!lastSnapshot || saving}
+                title={
+                  lastSnapshot
+                    ? `Restaurer la sauvegarde du ${new Date(lastSnapshot.at).toLocaleString("fr-FR")}`
+                    : "Aucune sauvegarde disponible"
+                }
+                className={`${btnCls} disabled:opacity-40`}
+              >
+                <History className="h-3.5 w-3.5" /> Réinitialiser (dernière sauvegarde)
               </button>
+              <button onClick={resetPage} className={btnCls}>
+                <RotateCcw className="h-3.5 w-3.5" /> Valeurs d'origine
+              </button>
+
               <button
                 onClick={save}
                 disabled={saving}
@@ -752,7 +926,20 @@ function CmsPage() {
                       className="min-w-[180px] flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none"
                     />
                     <span className="text-xs text-white/40">/{p.slug}</span>
+                    <button
+                      onClick={() => void toggleVisibility(p.slug)}
+                      title={visibility[p.slug] === false ? "Page masquée aux visiteurs" : "Page visible par les visiteurs"}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition ${
+                        visibility[p.slug] === false
+                          ? "border-rose-400/40 bg-rose-400/10 text-rose-200"
+                          : "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                      }`}
+                    >
+                      {visibility[p.slug] === false ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      {visibility[p.slug] === false ? "Masquée" : "Visible"}
+                    </button>
                     <div className="ml-auto flex items-center gap-1">
+
                       <button onClick={() => void movePage(i, -1)} disabled={i === 0} className={`${btnCls} disabled:opacity-30`}>
                         <ArrowUp className="h-3.5 w-3.5" />
                       </button>
@@ -784,7 +971,228 @@ function CmsPage() {
                 peuvent pas être supprimées, mais elles peuvent être renommées et réordonnées.
               </p>
             </div>
+          ) : tab === "buttons" ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-white/50">
+                  Boutons personnalisés affichés en bas de la page <strong>{pageName}</strong>.
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => void addButton()} className="btn-gradient inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold">
+                    <Plus className="h-3.5 w-3.5" /> Ajouter un bouton
+                  </button>
+                  <button onClick={() => void saveButtons()} className={btnCls}>
+                    <Save className="h-3.5 w-3.5" /> Enregistrer les boutons
+                  </button>
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {(buttons[pageSlug] ?? []).map((b) => (
+                  <div key={b.id} className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+                    <input
+                      value={b.label}
+                      onChange={(e) => void updateButton(b.id, { label: e.target.value })}
+                      placeholder="Texte du bouton"
+                      className={inputCls}
+                    />
+                    <input
+                      value={b.url}
+                      onChange={(e) => void updateButton(b.id, { url: e.target.value })}
+                      placeholder="/contact ou https://…"
+                      className={inputCls}
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        value={b.variant ?? "primary"}
+                        onChange={(e) => void updateButton(b.id, { variant: e.target.value as CustomButton["variant"] })}
+                        className={chipCls}
+                      >
+                        <option value="primary">Bouton plein</option>
+                        <option value="ghost">Bouton contour</option>
+                      </select>
+                      <select
+                        value={b.align ?? "left"}
+                        onChange={(e) => void updateButton(b.id, { align: e.target.value as CustomButton["align"] })}
+                        className={chipCls}
+                      >
+                        <option value="left">Gauche</option>
+                        <option value="center">Centre</option>
+                        <option value="right">Droite</option>
+                      </select>
+                      <button
+                        onClick={() => void deleteButton(b.id)}
+                        className="ml-auto rounded-xl border border-rose-400/30 px-3 py-2 text-xs text-rose-200 hover:bg-rose-400/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {(buttons[pageSlug] ?? []).length === 0 && (
+                  <p className="text-sm text-white/50">Aucun bouton sur cette page pour le moment.</p>
+                )}
+              </div>
+            </div>
+          ) : tab === "maintenance" ? (
+            <div className="grid max-w-2xl gap-5">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                <div>
+                  <p className="text-sm font-semibold text-white">Mode maintenance</p>
+                  <p className="text-xs text-white/50">
+                    Quand il est activé, les visiteurs voient uniquement l'écran de maintenance. Les personnes connectées
+                    gardent l'accès au site et au back-office.
+                  </p>
+                </div>
+                <button
+                  onClick={() => void patchMaintenance({ enabled: !maintenance.enabled })}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                    maintenance.enabled
+                      ? "border-rose-400/40 bg-rose-400/10 text-rose-200"
+                      : "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                  }`}
+                >
+                  {maintenance.enabled ? "Activé" : "Désactivé"}
+                </button>
+              </div>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">Titre</span>
+                <input
+                  value={maintenance.title}
+                  onChange={(e) => setMaintenance((p) => ({ ...p, title: e.target.value }))}
+                  onBlur={() => void patchMaintenance({})}
+                  className={inputCls}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                  Sous-titre
+                </span>
+                <input
+                  value={maintenance.subtitle}
+                  onChange={(e) => setMaintenance((p) => ({ ...p, subtitle: e.target.value }))}
+                  onBlur={() => void patchMaintenance({})}
+                  className={inputCls}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                  Fin du compte à rebours
+                </span>
+                <input
+                  type="datetime-local"
+                  value={maintenance.targetAt ? maintenance.targetAt.slice(0, 16) : ""}
+                  onChange={(e) =>
+                    void patchMaintenance({
+                      targetAt: e.target.value ? new Date(e.target.value).toISOString() : null,
+                    })
+                  }
+                  className={inputCls}
+                />
+              </label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/60">Image de fond</p>
+                  <div className="mb-3 aspect-video overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                    {maintenance.backgroundUrl ? (
+                      <img src={maintenance.backgroundUrl} alt="Fond maintenance" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-white/35">Aucune image</div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <label className="btn-gradient inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold">
+                      <Upload className="h-3.5 w-3.5" /> Téléverser
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void uploadMaintenance("backgroundUrl", file);
+                        }}
+                      />
+                    </label>
+                    {maintenance.backgroundUrl && (
+                      <button onClick={() => void patchMaintenance({ backgroundUrl: null })} className={btnCls}>
+                        Retirer
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/60">Logo</p>
+                  <div className="mb-3 grid aspect-video place-items-center overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                    {maintenance.logoUrl ? (
+                      <img
+                        src={maintenance.logoUrl}
+                        alt="Logo maintenance"
+                        style={{ height: `${maintenance.logoSize}px` }}
+                        className="w-auto object-contain"
+                      />
+                    ) : (
+                      <span className="text-xs text-white/35">Aucun logo</span>
+                    )}
+                  </div>
+                  <div className="mb-3 flex gap-2">
+                    <label className="btn-gradient inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold">
+                      <Upload className="h-3.5 w-3.5" /> Téléverser
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void uploadMaintenance("logoUrl", file);
+                        }}
+                      />
+                    </label>
+                    {maintenance.logoUrl && (
+                      <button onClick={() => void patchMaintenance({ logoUrl: null })} className={btnCls}>
+                        Retirer
+                      </button>
+                    )}
+                  </div>
+                  <label className="block text-[11px] text-white/50">
+                    Taille du logo — {maintenance.logoSize} px
+                    <input
+                      type="range"
+                      min={32}
+                      max={240}
+                      step={4}
+                      value={maintenance.logoSize}
+                      onChange={(e) => setMaintenance((p) => ({ ...p, logoSize: Number(e.target.value) }))}
+                      onMouseUp={() => void patchMaintenance({})}
+                      onTouchEnd={() => void patchMaintenance({})}
+                      className="mt-1 w-full"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {snapshots.length > 0 && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                    Sauvegardes récentes
+                  </p>
+                  <div className="space-y-1">
+                    {snapshots.map((s) => (
+                      <div key={s.at} className="flex items-center justify-between gap-3 text-xs text-white/60">
+                        <span>{new Date(s.at).toLocaleString("fr-FR")}</span>
+                        <button onClick={() => void restoreSnapshot(s)} className={btnCls}>
+                          <History className="h-3.5 w-3.5" /> Restaurer
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ) : tab === "partners" ? (
+
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-white/50">

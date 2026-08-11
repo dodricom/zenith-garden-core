@@ -24,7 +24,10 @@ export function usePartners() {
   });
 }
 
-/** Bandeau défilant des logos partenaires, piloté par le CMS. */
+/**
+ * Bande horizontale de logos partenaires : fond noir, logos monochromes,
+ * défilement fluide et continu (pause au survol), piloté par le CMS.
+ */
 export function PartnersStrip({ className = "" }: { className?: string }) {
   const { data } = usePartners();
   const partners = data ?? [];
@@ -32,26 +35,38 @@ export function PartnersStrip({ className = "" }: { className?: string }) {
   const items = [...partners, ...partners];
 
   return (
-    <div className={`pointer-events-auto w-full ${className}`}>
-      <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-        <div className="flex w-max items-center gap-8 animate-marquee-x">
-          {items.map((p, i) => (
-            <a
-              key={`${p.id}-${i}`}
-              href={p.websiteUrl ?? undefined}
-              target={p.websiteUrl ? "_blank" : undefined}
-              rel="noreferrer"
-              className="glass flex shrink-0 items-center gap-3 px-5 py-3 opacity-70 transition hover:opacity-100"
-              aria-label={p.name}
-            >
-              {p.logoUrl ? (
-                <img src={p.logoUrl} alt={`Logo ${p.name}`} loading="lazy" className="h-7 w-auto object-contain" />
-              ) : null}
-              <span className="whitespace-nowrap text-sm font-black tracking-[0.14em] text-white">{p.name}</span>
-            </a>
-          ))}
+    <section aria-label="Nos partenaires" className={`pointer-events-auto w-full bg-black ${className}`}>
+      <div className="border-y border-white/[0.06]">
+        <div className="logo-marquee mx-auto max-w-[1400px] px-4 py-6 sm:py-8">
+          <div className="logo-marquee-track flex w-max items-center gap-14 sm:gap-20">
+            {items.map((p, i) => (
+              <a
+                key={`${p.id}-${i}`}
+                href={p.websiteUrl ?? undefined}
+                target={p.websiteUrl ? "_blank" : undefined}
+                rel="noreferrer"
+                aria-hidden={i >= partners.length ? true : undefined}
+                tabIndex={i >= partners.length ? -1 : undefined}
+                className="flex shrink-0 items-center opacity-70 grayscale transition duration-300 hover:opacity-100 hover:grayscale-0"
+                aria-label={p.name}
+              >
+                {p.logoUrl ? (
+                  <img
+                    src={p.logoUrl}
+                    alt={`Logo ${p.name}`}
+                    loading="lazy"
+                    className="h-8 w-auto max-w-[160px] object-contain brightness-0 invert sm:h-10"
+                  />
+                ) : (
+                  <span className="whitespace-nowrap text-sm font-semibold uppercase tracking-[0.18em] text-white/85 sm:text-base">
+                    {p.name}
+                  </span>
+                )}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
