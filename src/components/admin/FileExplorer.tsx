@@ -202,7 +202,7 @@ export function FileExplorer() {
         <div className="max-h-[520px] overflow-y-auto rounded-2xl border border-white/10 bg-white/[0.02] p-2">
           {dir && (
             <button
-              onClick={() => setDir(dir.split("/").slice(0, -1).join(""))}
+              onClick={() => setDir(dir.split("/").slice(0, -1).join("/"))}
               className="w-full rounded-xl px-3 py-2 text-left text-xs text-white/50 hover:bg-white/[0.05] hover:text-white"
             >
               ../

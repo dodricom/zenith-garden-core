@@ -6,8 +6,10 @@ import {
   ArrowUp,
   Check,
   Code2,
+  Eraser,
   Eye,
   EyeOff,
+  FolderTree,
   Handshake,
   History,
   Image as ImageIcon,
@@ -27,6 +29,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { FileExplorer } from "@/components/admin/FileExplorer";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { runCmsAi, type CmsAiResult } from "@/lib/cms-ai.functions";
@@ -49,7 +52,7 @@ import {
 
 export const Route = createFileRoute("/admin/cms")({ component: CmsPage });
 
-type Tab = "texts" | "ai" | "images" | "pages" | "buttons" | "partners" | "maintenance" | "typo" | "code";
+type Tab = "texts" | "ai" | "files" | "images" | "pages" | "buttons" | "partners" | "maintenance" | "typo" | "code";
 type CmsPageRow = { id: string; slug: string; title: string; sort_order: number };
 type PartnerRow = { id: string; name: string; logo_url: string | null; website_url: string | null; sort_order: number };
 type CustomFieldMap = Record<string, TextField[]>;
@@ -105,10 +108,41 @@ function CmsPage() {
   const [codeMode, setCodeMode] = useState(false);
   const [code, setCode] = useState("");
   const [newPage, setNewPage] = useState({ title: "", slug: "" });
+  const [cacheCleared, setCacheCleared] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<CmsAiResult | null>(null);
   const callAi = useServerFn(runCmsAi);
+
+  const clearCache = async () => {
+    try {
+      queryClient.clear();
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.removeItem("site-texts");
+          window.sessionStorage.clear();
+        } catch {
+          /* stockage indisponible */
+        }
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+      }
+      await queryClient.invalidateQueries();
+      await reload();
+      setCacheCleared(true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 600);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
 
   const askAi = async () => {
     setAiLoading(true);
@@ -576,6 +610,7 @@ function CmsPage() {
     { id: "buttons", label: "Boutons", icon: MousePointerClick },
     { id: "partners", label: "Partenaires", icon: Handshake },
     { id: "maintenance", label: "Maintenance", icon: Wrench },
+    { id: "files", label: "Fichiers", icon: FolderTree },
     { id: "typo", label: "Typographie", icon: Settings2 },
     { id: "code", label: "Mode code", icon: Code2 },
   ];
@@ -619,6 +654,9 @@ function CmsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={() => void clearCache()} className={btnCls} title="Vider le cache du navigateur et recharger les contenus">
+                <Eraser className="h-3.5 w-3.5" /> {cacheCleared ? "Cache vidé" : "Vider le cache"}
+              </button>
               <button
                 onClick={() => lastSnapshot && void restoreSnapshot(lastSnapshot)}
                 disabled={!lastSnapshot || saving}
@@ -1309,6 +1347,14 @@ function CmsPage() {
                   </ul>
                 </div>
               )}
+            </div>
+          ) : tab === "files" ? (
+            <div>
+              <p className="mb-4 text-xs text-white/50">
+                Explorateur des fichiers du projet : créez, renommez, supprimez des fichiers, dossiers et images, et
+                modifiez directement le code.
+              </p>
+              <FileExplorer />
             </div>
           ) : tab === "typo" ? (
             <div className="grid max-w-xl gap-4">
