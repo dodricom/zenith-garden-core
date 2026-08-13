@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import {
   amountInWords,
   docTitle,
@@ -142,9 +143,9 @@ export function InvoiceDocument({
           </thead>
           <tbody>
             {Object.entries(sections).map(([section, rows]) => (
-              <>
+              <Fragment key={section || "_"}>
                 {section && (
-                  <tr key={`s-${section}`}>
+                  <tr>
                     <td colSpan={4} className="px-3 pt-4 text-[13px] font-bold" style={{ color: "#3aa3bd" }}>
                       {section}
                     </td>
@@ -166,7 +167,7 @@ export function InvoiceDocument({
                     </td>
                   </tr>
                 ))}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
