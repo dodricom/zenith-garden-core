@@ -11,7 +11,9 @@ import {
   setAdminUserPassword,
   setAdminUserRole,
   setAdminUserSuspended,
+  setAdminUserPermissions,
   type AdminRole,
+  type ModuleKeyDTO,
 } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/admin/administration")({
@@ -23,6 +25,18 @@ const ROLES: { value: AdminRole; label: string }[] = [
   { value: "admin", label: "Admin" },
   { value: "commercial", label: "Commercial" },
   { value: "editor", label: "Éditeur" },
+];
+
+const MODULES: { key: ModuleKeyDTO; label: string }[] = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "administration", label: "Administration" },
+  { key: "cms", label: "Website (CMS)" },
+  { key: "crm", label: "Commercial (CRM)" },
+  { key: "finance", label: "Finance" },
+  { key: "billing", label: "Facturation" },
+  { key: "saas", label: "SaaS Management" },
+  { key: "messages", label: "Messages" },
+  { key: "settings", label: "Paramètres" },
 ];
 
 const inputCls =
@@ -43,6 +57,7 @@ function AdministrationPage() {
   const fetchUsers = useServerFn(listAdminUsers);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ email: "", password: "", displayName: "", role: "editor" as AdminRole });
+  const [permFor, setPermFor] = useState<string | null>(null);
   const [pwFor, setPwFor] = useState<string | null>(null);
   const [pwValue, setPwValue] = useState("");
 
@@ -59,6 +74,7 @@ function AdministrationPage() {
   const changePassword = run(useServerFn(setAdminUserPassword));
   const suspend = run(useServerFn(setAdminUserSuspended));
   const remove = run(useServerFn(deleteAdminUser));
+  const savePerms = run(useServerFn(setAdminUserPermissions));
 
   const list = users.data ?? [];
   const active = list.filter((u) => !u.suspended).length;
@@ -187,6 +203,12 @@ function AdministrationPage() {
                     <td className="px-6 py-3">
                       <div className="flex items-center justify-end gap-2">
                         <button
+                          onClick={() => setPermFor(permFor === u.id ? null : u.id)}
+                          className="rounded-lg border border-white/10 px-2 py-1 text-xs text-white/70 hover:text-white"
+                        >
+                          Accès
+                        </button>
+                        <button
                           onClick={() => {
                             setPwFor(pwFor === u.id ? null : u.id);
                             setPwValue("");
@@ -214,6 +236,20 @@ function AdministrationPage() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
+                      {permFor === u.id && (
+                        <PermissionsPanel
+                          modules={u.modules}
+                          maintenanceAccess={u.maintenanceAccess}
+                          isSuperAdmin={u.roles.includes("super_admin")}
+                          onSave={(modules, maintenanceAccess) => {
+                            setError(null);
+                            savePerms.mutate(
+                              { data: { userId: u.id, modules, maintenanceAccess } },
+                              { onSuccess: () => setPermFor(null) },
+                            );
+                          }}
+                        />
+                      )}
                       {pwFor === u.id && (
                         <div className="mt-2 flex items-center justify-end gap-2">
                           <input
@@ -246,6 +282,81 @@ function AdministrationPage() {
         )}
       </div>
     </AdminShell>
+  );
+}
+
+function PermissionsPanel({
+  modules,
+  maintenanceAccess,
+  isSuperAdmin,
+  onSave,
+}: {
+  modules: ModuleKeyDTO[];
+  maintenanceAccess: boolean;
+  isSuperAdmin: boolean;
+  onSave: (modules: ModuleKeyDTO[], maintenanceAccess: boolean) => void;
+}) {
+  const [sel, setSel] = useState<ModuleKeyDTO[]>(modules);
+  const [maint, setMaint] = useState(maintenanceAccess);
+  const toggle = (k: ModuleKeyDTO) =>
+    setSel((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]));
+
+  return (
+    <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left">
+      <p className="mb-3 text-xs font-semibold text-white">
+        Modules visibles dans le back-office
+      </p>
+      {isSuperAdmin && (
+        <p className="mb-3 text-[11px] text-amber-200/80">
+          Un super admin a toujours accès à tous les modules.
+        </p>
+      )}
+      <div className="grid gap-2 sm:grid-cols-3">
+        {MODULES.map((m) => (
+          <label key={m.key} className="flex items-center gap-2 text-xs text-white/75">
+            <input
+              type="checkbox"
+              checked={sel.includes(m.key)}
+              onChange={() => toggle(m.key)}
+              className="h-3.5 w-3.5 accent-[color:var(--brand-violet)]"
+            />
+            {m.label}
+          </label>
+        ))}
+      </div>
+      <label className="mt-4 flex items-center gap-2 text-xs text-white/75">
+        <input
+          type="checkbox"
+          checked={maint}
+          onChange={(e) => setMaint(e.target.checked)}
+          className="h-3.5 w-3.5 accent-[color:var(--brand-violet)]"
+        />
+        Peut consulter le site pendant la maintenance
+      </label>
+      <div className="mt-4 flex items-center gap-2">
+        <button
+          onClick={() => onSave(sel, maint)}
+          className="btn-gradient rounded-lg px-4 py-1.5 text-xs font-semibold"
+        >
+          Enregistrer les accès
+        </button>
+        <button
+          onClick={() => setSel(MODULES.map((m) => m.key))}
+          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:text-white"
+        >
+          Tout cocher
+        </button>
+        <button
+          onClick={() => setSel([])}
+          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:text-white"
+        >
+          Tout décocher
+        </button>
+      </div>
+      <p className="mt-2 text-[11px] text-white/40">
+        Aucune case cochée = permissions par défaut du rôle.
+      </p>
+    </div>
   );
 }
 
