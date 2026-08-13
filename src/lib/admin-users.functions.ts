@@ -3,6 +3,17 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type AdminRole = "super_admin" | "admin" | "commercial" | "editor";
 
+export type ModuleKeyDTO =
+  | "dashboard"
+  | "administration"
+  | "cms"
+  | "crm"
+  | "finance"
+  | "billing"
+  | "saas"
+  | "messages"
+  | "settings";
+
 export type AdminUserDTO = {
   id: string;
   email: string;
@@ -12,6 +23,8 @@ export type AdminUserDTO = {
   lastSignInAt: string | null;
   createdAt: string;
   confirmed: boolean;
+  modules: ModuleKeyDTO[];
+  maintenanceAccess: boolean;
 };
 
 type Ctx = { supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> }; userId: string };
@@ -35,10 +48,20 @@ export const listAdminUsers = createServerFn({ method: "GET" })
     const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
     if (error) throw new Error(error.message);
 
-    const [{ data: profiles }, { data: roles }] = await Promise.all([
+    const [{ data: profiles }, { data: roles }, { data: perms }] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, display_name, email"),
       supabaseAdmin.from("user_roles").select("user_id, role"),
+      supabaseAdmin.from("user_permissions").select("user_id, modules, maintenance_access"),
     ]);
+    const permById = new Map(
+      (perms ?? []).map((p) => [
+        p.user_id,
+        {
+          modules: (Array.isArray(p.modules) ? (p.modules as ModuleKeyDTO[]) : []),
+          maintenanceAccess: Boolean(p.maintenance_access),
+        },
+      ]),
+    );
 
     const nameById = new Map((profiles ?? []).map((p) => [p.id, p.display_name ?? ""]));
     const rolesById = new Map<string, AdminRole[]>();
@@ -57,6 +80,8 @@ export const listAdminUsers = createServerFn({ method: "GET" })
       lastSignInAt: u.last_sign_in_at ?? null,
       createdAt: u.created_at,
       confirmed: Boolean(u.email_confirmed_at),
+      modules: permById.get(u.id)?.modules ?? [],
+      maintenanceAccess: permById.get(u.id)?.maintenanceAccess ?? false,
     }));
   });
 
@@ -152,6 +177,26 @@ export const deleteAdminUser = createServerFn({ method: "POST" })
     if (data.userId === (context as unknown as Ctx).userId) throw new Error("Vous ne pouvez pas supprimer votre propre compte.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const setAdminUserPermissions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: { userId: string; modules: ModuleKeyDTO[]; maintenanceAccess: boolean }) => data,
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as unknown as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("user_permissions").upsert(
+      {
+        user_id: data.userId,
+        modules: data.modules,
+        maintenance_access: data.maintenanceAccess,
+      },
+      { onConflict: "user_id" },
+    );
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
