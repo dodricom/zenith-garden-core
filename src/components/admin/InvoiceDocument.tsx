@@ -28,6 +28,14 @@ export const DEFAULT_PRINT_OPTIONS: PrintOptions = {
 const NAVY = "#152452";
 const CYAN = "#63c9dd";
 
+/**
+ * Rendu A4 du document administratif.
+ *
+ * - Le papier reste blanc sous le Header.
+ * - Le logo est indépendant du nom de société.
+ * - Le papier en-tête est indépendant du logo.
+ * - Les informations client sont centrées à droite.
+ */
 export function InvoiceDocument({
   doc,
   lines,
@@ -52,11 +60,10 @@ export function InvoiceDocument({
 
   return (
     <div
-      className="print-area relative mx-auto flex flex-col text-[#1a1a1a]"
+      className="print-area relative mx-auto flex flex-col bg-white text-[#1a1a1a]"
       style={{
         width: "210mm",
         minHeight: "297mm",
-        backgroundColor: "#ffffff",
         fontFamily: "Georgia, 'Times New Roman', serif",
         overflow: "hidden",
       }}
@@ -78,41 +85,112 @@ export function InvoiceDocument({
       )}
 
       {/* ============================================================
-          CONTENU COMPLET
+          CONTENU PRINCIPAL
           ============================================================ */}
 
       <div
-        className="relative z-10 flex min-h-full flex-1 flex-col"
+        className="relative z-10 flex flex-1 flex-col"
         style={{
           backgroundColor: "transparent",
         }}
       >
         {/* ==========================================================
-            EN-TÊTE
+            HEADER
             ========================================================== */}
 
         <div
           className="relative"
           style={{
-            minHeight: "42mm",
+            minHeight: "48mm",
             backgroundColor: "transparent",
           }}
         >
-          <div className="relative z-10 flex items-start justify-between gap-6 px-8 py-5">
+          {/* --------------------------------------------------------
+              FORMES DU HEADER
+              -------------------------------------------------------- */}
+
+          {!options.letterhead && (
+            <>
+              {/* Fond bleu */}
+              <div
+                className="absolute left-0 top-0 h-full"
+                style={{
+                  width: "100%",
+                  background: NAVY,
+                  zIndex: 0,
+                }}
+              />
+
+              {/* Courbe blanche */}
+              <div
+                className="absolute right-0 top-0 h-full"
+                style={{
+                  width: "62%",
+                  background: "#ffffff",
+                  clipPath:
+                    "ellipse(78% 120% at 92% 12%)",
+                  zIndex: 1,
+                }}
+              />
+
+              {/* Courbe cyan */}
+              <div
+                className="absolute right-0 top-0 h-full"
+                style={{
+                  width: "64%",
+                  background: CYAN,
+                  clipPath:
+                    "ellipse(78% 120% at 95% 6%)",
+                  opacity: 0.9,
+                  zIndex: 2,
+                }}
+              />
+
+              {/* Deuxième courbe blanche */}
+              <div
+                className="absolute right-0 top-0 h-full"
+                style={{
+                  width: "60%",
+                  background: "#ffffff",
+                  clipPath:
+                    "ellipse(78% 120% at 96% 2%)",
+                  zIndex: 3,
+                }}
+              />
+            </>
+          )}
+
+          {/* --------------------------------------------------------
+              CONTENU HEADER
+              -------------------------------------------------------- */}
+
+          <div
+            className="relative z-10 flex items-start justify-between gap-6 px-8"
+            style={{
+              paddingTop: "7mm",
+              paddingBottom: "7mm",
+            }}
+          >
             {/* ======================================================
                 LOGO
                 ====================================================== */}
 
-            <div className="flex min-w-0 flex-1 items-start">
+            <div
+              className="flex min-w-0 flex-1 items-start"
+              style={{
+                minHeight: "32mm",
+              }}
+            >
               {options.logo && settings?.logo_url && (
                 <img
                   src={settings.logo_url}
-                  alt={settings.company_name ?? "DODRICOM"}
+                  alt=""
                   style={{
-                    height: "38mm",
+                    height: "32mm",
                     width: "auto",
-                    maxWidth: "100mm",
+                    maxWidth: "85mm",
                     objectFit: "contain",
+                    objectPosition: "left center",
                     display: "block",
                   }}
                 />
@@ -120,25 +198,18 @@ export function InvoiceDocument({
             </div>
 
             {/* ======================================================
-                INFORMATIONS CLIENT
-
-                Alignement centré comme sur ton exemple :
-                
-                    Facture N° FA...
-                        CLIENT
-                 Adresse complète
-                    ICE XXXXX
-              Bon de Commande : XXXXX
-            ====================================================== */}
+                INFORMATIONS DU CLIENT
+                ====================================================== */}
 
             <div
               className="shrink-0 text-center"
               style={{
                 width: "82mm",
                 marginLeft: "auto",
+                paddingTop: "3mm",
               }}
             >
-              {/* Numéro document */}
+              {/* Numéro du document */}
               <p
                 className="text-[19px] font-bold"
                 style={{
@@ -150,10 +221,11 @@ export function InvoiceDocument({
                 {docTitle(doc.doc_type)} N° {doc.number}
               </p>
 
-              {/* Nom client */}
+              {/* Nom du client */}
               <p
                 className="mt-1 text-[13px] font-bold"
                 style={{
+                  color: "#111111",
                   lineHeight: "1.35",
                   whiteSpace: "nowrap",
                 }}
@@ -166,6 +238,7 @@ export function InvoiceDocument({
                 <p
                   className="text-[11px]"
                   style={{
+                    color: "#111111",
                     lineHeight: "1.4",
                     whiteSpace: "nowrap",
                   }}
@@ -179,6 +252,7 @@ export function InvoiceDocument({
                 <p
                   className="mt-1 text-[12px] font-bold"
                   style={{
+                    color: "#111111",
                     lineHeight: "1.35",
                     whiteSpace: "nowrap",
                   }}
@@ -192,11 +266,13 @@ export function InvoiceDocument({
                 <p
                   className="text-[12px]"
                   style={{
+                    color: "#111111",
                     lineHeight: "1.4",
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Bon de Commande : {doc.order_ref}
+                  Bon de Commande :{" "}
+                  {doc.order_ref}
                 </p>
               )}
             </div>
@@ -204,7 +280,7 @@ export function InvoiceDocument({
         </div>
 
         {/* ==========================================================
-            CONTENU PRINCIPAL
+            CORPS DU DOCUMENT
             ========================================================== */}
 
         <div
@@ -238,7 +314,8 @@ export function InvoiceDocument({
             <p
               className="mt-5 text-[12.5px] leading-relaxed"
               style={{
-                fontFamily: "Arial, sans-serif",
+                fontFamily:
+                  "Arial, sans-serif",
               }}
             >
               {doc.intro_text}
@@ -246,7 +323,7 @@ export function InvoiceDocument({
           )}
 
           {/* ========================================================
-              TABLEAU
+              TABLEAU DES ARTICLES
               ======================================================== */}
 
           <table className="mt-5 w-full border-collapse text-[12px]">
@@ -281,8 +358,10 @@ export function InvoiceDocument({
             <tbody>
               {Object.entries(sections).map(
                 ([section, rows]) => (
-                  <Fragment key={section || "_"}>
-                    {/* Section */}
+                  <Fragment
+                    key={section || "_"}
+                  >
+                    {/* Nom de section */}
                     {section && (
                       <tr>
                         <td
@@ -308,7 +387,8 @@ export function InvoiceDocument({
                         <td
                           className="px-3 py-2 font-semibold"
                           style={{
-                            borderRight: `1px solid ${CYAN}`,
+                            borderRight:
+                              `1px solid ${CYAN}`,
                           }}
                         >
                           {l.designation}
@@ -317,18 +397,25 @@ export function InvoiceDocument({
                         <td
                           className="px-3 py-2 text-center"
                           style={{
-                            borderRight: `1px solid ${CYAN}`,
+                            borderRight:
+                              `1px solid ${CYAN}`,
                           }}
                         >
-                          {Number(l.unit_price)
+                          {Number(
+                            l.unit_price,
+                          )
                             .toFixed(2)
-                            .replace(".", ",")}
+                            .replace(
+                              ".",
+                              ",",
+                            )}
                         </td>
 
                         <td
                           className="px-3 py-2 text-center"
                           style={{
-                            borderRight: `1px solid ${CYAN}`,
+                            borderRight:
+                              `1px solid ${CYAN}`,
                           }}
                         >
                           {l.unit &&
@@ -342,10 +429,15 @@ export function InvoiceDocument({
                             Number(
                               l.unit_price,
                             ) *
-                            Number(l.quantity)
+                            Number(
+                              l.quantity,
+                            )
                           )
                             .toFixed(2)
-                            .replace(".", ",")}
+                            .replace(
+                              ".",
+                              ",",
+                            )}
                         </td>
                       </tr>
                     ))}
@@ -356,7 +448,7 @@ export function InvoiceDocument({
           </table>
 
           {/* ========================================================
-              ESPACE
+              ESPACE AVANT TOTAUX
               ======================================================== */}
 
           <div className="flex-1" />
@@ -366,9 +458,9 @@ export function InvoiceDocument({
               ======================================================== */}
 
           <div className="mt-8 flex items-start justify-between gap-6">
-            {/* ======================================================
-                TABLEAU DES TOTAUX
-                ====================================================== */}
+            {/* ------------------------------------------------------
+                TOTAUX + CONDITIONS
+                ------------------------------------------------------ */}
 
             <div className="flex-1">
               <table className="w-full border-collapse text-center text-[11.5px]">
@@ -444,17 +536,15 @@ export function InvoiceDocument({
                 </tbody>
               </table>
 
-              {/* ====================================================
-                  CONDITIONS COMMERCIALES
-                  ==================================================== */}
-
+              {/* Conditions commerciales */}
               {options.terms &&
                 (doc.terms ||
                   settings?.terms) && (
                   <div
                     className="mt-4 rounded-lg px-4 py-3 text-[11.5px]"
                     style={{
-                      background: "#cfe4e4",
+                      background:
+                        "#cfe4e4",
                     }}
                   >
                     <p className="mb-1 font-bold">
@@ -483,15 +573,16 @@ export function InvoiceDocument({
                 )}
             </div>
 
-            {/* ======================================================
-                NET A PAYER + CACHET
-                ====================================================== */}
+            {/* ------------------------------------------------------
+                NET A PAYER
+                ------------------------------------------------------ */}
 
             <div className="w-[62mm] shrink-0">
               <div
                 className="rounded-lg px-4 py-4 text-center"
                 style={{
-                  background: "#b9d4d4",
+                  background:
+                    "#b9d4d4",
                 }}
               >
                 <p className="text-[14px] font-bold">
