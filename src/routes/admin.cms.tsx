@@ -29,6 +29,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { MaintenanceAccess } from "@/components/admin/MaintenanceAccess";
 import { FileExplorer } from "@/components/admin/FileExplorer";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -1077,8 +1078,8 @@ function CmsPage() {
                 <div>
                   <p className="text-sm font-semibold text-white">Mode maintenance</p>
                   <p className="text-xs text-white/50">
-                    Quand il est activé, les visiteurs voient uniquement l'écran de maintenance. Les personnes connectées
-                    gardent l'accès au site et au back-office.
+                    Quand il est activé, seuls les super admins et les utilisateurs autorisés ci-dessous voient le
+                    site. Les autres visiteurs ne voient que l'écran de maintenance.
                   </p>
                 </div>
                 <button
@@ -1210,6 +1211,8 @@ function CmsPage() {
                   </label>
                 </div>
               </div>
+
+              <MaintenanceAccess />
 
               {snapshots.length > 0 && (
                 <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
