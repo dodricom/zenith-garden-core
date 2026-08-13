@@ -22,7 +22,11 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const slug = slugFromPath(pathname);
   const pageHidden = pageVisibility[slug] === false;
 
-  if (maintenance.enabled && !user) return <MaintenanceScreen />;
+  const canBypassMaintenance =
+    !!user && (user.roles.includes("super_admin") || user.maintenanceAccess);
+
+  if (maintenance.enabled && !canBypassMaintenance) return <MaintenanceScreen />;
+
 
   return (
     <div className="relative min-h-screen">
