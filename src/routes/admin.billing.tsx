@@ -825,8 +825,8 @@ function BillingPage() {
       )}
 
       {preview && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 p-4 backdrop-blur-sm">
-          <div className="mx-auto max-w-[230mm]">
+<div className="fixed inset-0 z-50 overflow-y-auto bg-white p-4">
+      <div className="mx-auto max-w-[230mm]">
             <div className="no-print sticky top-0 z-10 mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-black/80 p-3">
               {(
                 [
