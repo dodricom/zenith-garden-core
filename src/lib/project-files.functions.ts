@@ -10,6 +10,32 @@ import {
   type FsEntry,
 } from "@/lib/project-files";
 
+/** Racine des sources du projet (et non la version compilée servie en production). */
+async function sourceRoot(): Promise<string> {
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const seen: string[] = [];
+  let dir = process.cwd();
+  for (let i = 0; i < 6; i++) {
+    seen.push(dir);
+    try {
+      const items = await fs.readdir(dir);
+      if (items.includes("package.json") && items.includes("src")) {
+        const sub = await fs.readdir(path.join(dir, "src"));
+        if (sub.includes("routes") || sub.includes("components")) return dir;
+      }
+    } catch {
+      /* ignore */
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  throw new Error(
+    "Les fichiers sources du projet ne sont pas accessibles depuis cet environnement (seule la version compilée est déployée). Ouvrez l'explorateur depuis l'aperçu de développement.",
+  );
+}
+
 export const listProjectFiles = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { dir?: string }) => d)
@@ -18,7 +44,8 @@ export const listProjectFiles = createServerFn({ method: "POST" })
     const rel = safeRelative(data.dir ?? "");
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
-    const abs = (p: string) => path.join(process.cwd(), p);
+    const root = await sourceRoot();
+    const abs = (p: string) => path.join(root, p);
     const items = await fs.readdir(abs(rel), { withFileTypes: true });
     const out: FsEntry[] = [];
     for (const it of items) {
@@ -48,7 +75,7 @@ export const readProjectFile = createServerFn({ method: "POST" })
       const rel = safeRelative(data.path);
       const fs = await import("node:fs/promises");
       const path = await import("node:path");
-      const abs = path.join(process.cwd(), rel);
+      const abs = path.join(await sourceRoot(), rel);
       if (isTextPath(rel)) {
         return { path: rel, content: await fs.readFile(abs, "utf8"), binary: false, dataUrl: null };
       }
@@ -70,7 +97,7 @@ export const writeProjectFile = createServerFn({ method: "POST" })
     const rel = safeRelative(data.path);
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
-    await fs.writeFile(path.join(process.cwd(), rel), data.content, "utf8");
+    await fs.writeFile(path.join(await sourceRoot(), rel), data.content, "utf8");
     return { ok: true };
   });
 
@@ -83,7 +110,7 @@ export const createProjectEntry = createServerFn({ method: "POST" })
     if (!rel) throw new Error("Chemin invalide.");
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
-    const abs = path.join(process.cwd(), rel);
+    const abs = path.join(await sourceRoot(), rel);
     if (data.kind === "dir") {
       await fs.mkdir(abs, { recursive: true });
       return { ok: true };
@@ -103,7 +130,7 @@ export const deleteProjectEntry = createServerFn({ method: "POST" })
     if (!rel) throw new Error("Chemin invalide.");
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
-    await fs.rm(path.join(process.cwd(), rel), { recursive: true, force: true });
+    await fs.rm(path.join(await sourceRoot(), rel), { recursive: true, force: true });
     return { ok: true };
   });
 
@@ -117,8 +144,9 @@ export const renameProjectEntry = createServerFn({ method: "POST" })
     if (!from || !to) throw new Error("Chemin invalide.");
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
-    const absTo = path.join(process.cwd(), to);
+    const root = await sourceRoot();
+    const absTo = path.join(root, to);
     await fs.mkdir(path.dirname(absTo), { recursive: true });
-    await fs.rename(path.join(process.cwd(), from), absTo);
+    await fs.rename(path.join(root, from), absTo);
     return { ok: true };
   });
