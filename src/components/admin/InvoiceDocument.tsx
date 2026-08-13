@@ -60,7 +60,7 @@ export function InvoiceDocument({
         />
       )}
 
-      {/* En-tête */}
+            {/* En-tête */}
       <div className="relative" style={{ background: NAVY, minHeight: "34mm" }}>
         <div
           className="absolute right-0 top-0 h-full"
@@ -70,6 +70,7 @@ export function InvoiceDocument({
             clipPath: "ellipse(78% 120% at 92% 12%)",
           }}
         />
+
         <div
           className="absolute right-0 top-0 h-full"
           style={{
@@ -80,6 +81,7 @@ export function InvoiceDocument({
             zIndex: 0,
           }}
         />
+
         <div
           className="absolute right-0 top-0 h-full"
           style={{
@@ -89,6 +91,49 @@ export function InvoiceDocument({
             zIndex: 1,
           }}
         />
+
+        <div className="relative z-10 flex items-center justify-between gap-6 px-8 py-5">
+          {/* Logo */}
+          <div className="flex items-center">
+            {options.logo && settings?.logo_url && (
+              <img
+                src={settings.logo_url}
+                alt={settings.company_name ?? "DODRICOM"}
+                style={{ height: "22mm" }}
+              />
+            )}
+          </div>
+
+          {/* Informations du devis */}
+          <div className="max-w-[52%] text-right">
+            <p className="text-[19px] font-bold" style={{ color: "#111" }}>
+              {docTitle(doc.doc_type)} N° {doc.number}
+            </p>
+
+            <p className="mt-1 text-[13px] font-bold">
+              {doc.client_name}
+            </p>
+
+            {doc.client_address && (
+              <p className="text-[11px]">
+                {doc.client_address}
+              </p>
+            )}
+
+            {doc.client_ice && (
+              <p className="mt-1 text-[12px] font-bold">
+                ICE {doc.client_ice}
+              </p>
+            )}
+
+            {doc.order_ref && (
+              <p className="text-[12px]">
+                Bon de Commande : {doc.order_ref}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
         <div className="relative z-10 flex items-center justify-between gap-6 px-8 py-5">
   <div className="flex items-center">
     {options.logo && settings?.logo_url && (
