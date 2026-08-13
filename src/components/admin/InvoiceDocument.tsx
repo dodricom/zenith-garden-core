@@ -90,15 +90,17 @@ export function InvoiceDocument({
           }}
         />
         <div className="relative z-10 flex items-center justify-between gap-6 px-8 py-5">
-          <div className="flex items-center">
-           {options.logo && settings?.logo_url && (
-            <img
-             src={settings.logo_url}
-             alt={settings.company_name ?? "DODRICOM"}
-             style={{ height: "22mm" }}
-                 />
-            )}
-          </div>
+  <div className="flex items-center">
+    {options.logo && settings?.logo_url && (
+      <img
+        src={settings.logo_url}
+        alt={settings.company_name ?? "DODRICOM"}
+        style={{ height: "22mm" }}
+      />
+    )}
+  </div>
+
+  <div className="max-w-[52%] text-right">
           <div className="max-w-[52%] text-right">
             <p className="text-[19px] font-bold" style={{ color: "#111" }}>
               {docTitle(doc.doc_type)} N° {doc.number}
