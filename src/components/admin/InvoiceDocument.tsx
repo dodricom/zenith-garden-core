@@ -160,22 +160,22 @@ export function InvoiceDocument({
                 minHeight: "32mm",
               }}
             >
-              {options.logo &&
-                !options.letterhead &&
-                settings?.logo_url && (
-                  <img
-                    src={settings.logo_url}
-                    alt=""
-                    style={{
-                      height: "32mm",
-                      width: "auto",
-                      maxWidth: "85mm",
-                      objectFit: "contain",
-                      objectPosition: "left center",
-                      display: "block",
-                    }}
-                  />
-                )}
+              {options.logo && settings?.logo_url && (
+  <img
+    src={settings.logo_url}
+    alt=""
+    style={{
+      height: "32mm",
+      width: "auto",
+      maxWidth: "85mm",
+      objectFit: "contain",
+      objectPosition: "left center",
+      display: "block",
+      position: "relative",
+      zIndex: 20,
+    }}
+  />
+)}
             </div>
 
             {/* ======================================================
