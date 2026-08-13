@@ -131,9 +131,9 @@ export function InvoiceDocument({
                   src={settings.logo_url}
                   alt={settings.company_name ?? "DODRICOM"}
                   style={{
-                    height: "22mm",
+                    height: "44mm",
                     width: "auto",
-                    maxWidth: "70mm",
+                    maxWidth: "140mm",
                     objectFit: "contain",
                     display: "block",
                   }}
