@@ -24,10 +24,20 @@ export const BLOCKED_ENTRIES = [
   ".env",
   ".env.local",
   "dist",
+  "build",
   ".output",
   ".vinxi",
+  ".tanstack",
+  ".nitro",
+  ".wrangler",
+  ".cache",
+  ".turbo",
   "bun.lockb",
+  "bun.lock",
+  "package-lock.json",
+  "routeTree.gen.ts",
 ];
+
 
 export function safeRelative(input: string) {
   const rel = (input || "").replace(/\\/g, "/").replace(/^\/+/, "");
