@@ -323,10 +323,12 @@ function BillingPage() {
     const signed = await supabase.storage.from("cms").createSignedUrl(path, 60 * 60 * 24 * 3650);
     const url = signed.data?.signedUrl;
     if (!url || !settings) return setError(signed.error?.message ?? "URL introuvable.");
+    const patch = { [kind]: url } as Partial<BillingSettings>;
     const { error: err } = await supabase
       .from("billing_settings")
-      .update({ [kind]: url })
+      .update(patch)
       .eq("id", settings.id);
+
     if (err) return setError(err.message);
     setSettings({ ...settings, [kind]: url });
   };
