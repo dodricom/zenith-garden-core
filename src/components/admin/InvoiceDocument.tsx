@@ -48,16 +48,31 @@ export function InvoiceDocument({
     return acc;
   }, {});
 
+  /*
+   * Si le Logo est désactivé :
+   * - aucun fond NAVY
+   * - aucune courbe CYAN
+   * - aucune image de logo
+   * - aucune image de papier à en-tête
+   *
+   * La page reste donc blanche pour permettre
+   * l'impression sur une feuille EN-TÊTE pré-imprimée.
+   */
+
   return (
     <div
       className="print-area relative mx-auto flex flex-col bg-white text-[#1a1a1a]"
       style={{
         width: "210mm",
         minHeight: "297mm",
+        backgroundColor: "#ffffff",
         fontFamily: "Georgia, 'Times New Roman', serif",
       }}
     >
-      {/* ==================== PAPIER EN-TÊTE ==================== */}
+      {/* ============================================================
+          PAPIER EN-TÊTE
+          ============================================================ */}
+
       {options.letterhead && settings?.letterhead_url && (
         <img
           src={settings.letterhead_url}
@@ -66,77 +81,115 @@ export function InvoiceDocument({
         />
       )}
 
-      {/* ==================== EN-TÊTE ==================== */}
+      {/* ============================================================
+          EN-TÊTE DU DOCUMENT
+          ============================================================ */}
+
       <div
         className="relative"
         style={{
           minHeight: "34mm",
-          background: "#fff",
+          backgroundColor: "#ffffff",
         }}
       >
-        {/* ==================== BANDE NAVY ==================== */}
-        <div
-          className="absolute left-0 top-0 h-[25mm] w-full"
-          style={{
-            background: NAVY,
-          }}
-        />
+        {/* ----------------------------------------------------------
+            DESIGN DODRICOM
+            Affiché uniquement lorsque Logo est activé
+            ---------------------------------------------------------- */}
 
-        {/* ==================== COURBE BLANCHE ==================== */}
-        <div
-          className="absolute right-0 top-0 h-[25mm]"
-          style={{
-            width: "62%",
-            background: "#fff",
-            clipPath: "ellipse(78% 120% at 92% 12%)",
-            zIndex: 1,
-          }}
-        />
+        {options.logo && settings?.logo_url && (
+          <>
+            {/* Bande NAVY */}
+            <div
+              className="absolute left-0 top-0 w-full"
+              style={{
+                height: "25mm",
+                background: NAVY,
+              }}
+            />
 
-        {/* ==================== COURBE CYAN ==================== */}
-        <div
-          className="absolute right-0 top-0 h-[25mm]"
-          style={{
-            width: "64%",
-            background: CYAN,
-            clipPath: "ellipse(78% 120% at 95% 6%)",
-            opacity: 0.9,
-            zIndex: 2,
-          }}
-        />
+            {/* Courbe blanche */}
+            <div
+              className="absolute right-0 top-0"
+              style={{
+                width: "62%",
+                height: "25mm",
+                background: "#ffffff",
+                clipPath: "ellipse(78% 120% at 92% 12%)",
+                zIndex: 1,
+              }}
+            />
 
-        {/* ==================== COURBE BLANCHE FINALE ==================== */}
-        <div
-          className="absolute right-0 top-0 h-[25mm]"
-          style={{
-            width: "60%",
-            background: "#fff",
-            clipPath: "ellipse(78% 120% at 96% 2%)",
-            zIndex: 3,
-          }}
-        />
+            {/* Courbe CYAN */}
+            <div
+              className="absolute right-0 top-0"
+              style={{
+                width: "64%",
+                height: "25mm",
+                background: CYAN,
+                clipPath: "ellipse(78% 120% at 95% 6%)",
+                opacity: 0.9,
+                zIndex: 2,
+              }}
+            />
 
-        {/* ==================== CONTENU HEADER ==================== */}
-        <div className="relative z-10 flex items-center justify-between gap-6 px-8 py-5">
-          {/* LOGO */}
-          <div className="flex items-center">
+            {/* Courbe blanche finale */}
+            <div
+              className="absolute right-0 top-0"
+              style={{
+                width: "60%",
+                height: "25mm",
+                background: "#ffffff",
+                clipPath: "ellipse(78% 120% at 96% 2%)",
+                zIndex: 3,
+              }}
+            />
+          </>
+        )}
+
+        {/* ==========================================================
+            CONTENU DE L'EN-TÊTE
+            ========================================================== */}
+
+        <div
+          className={`relative z-10 flex items-center justify-between gap-6 px-8 ${
+            options.logo && settings?.logo_url ? "py-2" : "py-5"
+          }`}
+        >
+          {/* --------------------------------------------------------
+              LOGO
+              -------------------------------------------------------- */}
+
+          <div
+            className={
+              options.logo && settings?.logo_url
+                ? "flex h-[25mm] items-center overflow-hidden"
+                : "flex h-[20mm] items-center"
+            }
+          >
             {options.logo && settings?.logo_url && (
               <img
                 src={settings.logo_url}
                 alt={settings.company_name ?? "DODRICOM"}
                 style={{
-                  height: "22mm",
+                  height: "20mm",
+                  width: "auto",
+                  objectFit: "contain",
+                  display: "block",
                 }}
               />
             )}
           </div>
 
-          {/* INFORMATIONS DU DEVIS */}
+          {/* --------------------------------------------------------
+              INFORMATIONS DU DOCUMENT
+              -------------------------------------------------------- */}
+
           <div className="max-w-[52%] text-right">
             <p
               className="text-[19px] font-bold"
               style={{
-                color: "#111",
+                color: "#111111",
               }}
             >
               {docTitle(doc.doc_type)} N° {doc.number}
@@ -167,9 +220,15 @@ export function InvoiceDocument({
         </div>
       </div>
 
-      {/* ==================== CONTENU ==================== */}
-      <div className="relative z-10 flex flex-1 flex-col px-8 pb-6">
-        {/* DATE */}
+      {/* ============================================================
+          CONTENU PRINCIPAL
+          ============================================================ */}
+
+      <div className="relative z-10 flex flex-1 flex-col bg-white px-8 pb-6">
+        {/* ----------------------------------------------------------
+            DATE
+            ---------------------------------------------------------- */}
+
         <div className="mt-4 flex justify-end">
           <span
             className="rounded-full px-6 py-1.5 text-[13px] font-bold text-white"
@@ -183,7 +242,10 @@ export function InvoiceDocument({
           </span>
         </div>
 
-        {/* TEXTE INTRODUCTIF */}
+        {/* ----------------------------------------------------------
+            TEXTE INTRODUCTIF
+            ---------------------------------------------------------- */}
+
         {doc.intro_text && (
           <p
             className="mt-5 text-[12.5px] leading-relaxed"
@@ -195,7 +257,10 @@ export function InvoiceDocument({
           </p>
         )}
 
-        {/* ==================== TABLEAU ==================== */}
+        {/* ==========================================================
+            TABLEAU DES ARTICLES
+            ========================================================== */}
+
         <table className="mt-5 w-full border-collapse text-[12px]">
           <thead>
             <tr
@@ -228,7 +293,7 @@ export function InvoiceDocument({
           <tbody>
             {Object.entries(sections).map(([section, rows]) => (
               <Fragment key={section || "_"}>
-                {/* SECTION */}
+                {/* Nom de section */}
                 {section && (
                   <tr>
                     <td
@@ -243,7 +308,7 @@ export function InvoiceDocument({
                   </tr>
                 )}
 
-                {/* LIGNES */}
+                {/* Lignes */}
                 {rows.map((l, i) => (
                   <tr key={l.id ?? `${section}-${i}`}>
                     <td
@@ -290,10 +355,18 @@ export function InvoiceDocument({
           </tbody>
         </table>
 
+        {/* Espace flexible */}
         <div className="flex-1" />
 
-        {/* ==================== TOTAUX ==================== */}
+        {/* ==========================================================
+            TOTAUX
+            ========================================================== */}
+
         <div className="mt-8 flex items-start justify-between gap-6">
+          {/* --------------------------------------------------------
+              TABLEAU TOTALS
+              -------------------------------------------------------- */}
+
           <div className="flex-1">
             <table className="w-full border-collapse text-center text-[11.5px]">
               <thead>
@@ -353,7 +426,10 @@ export function InvoiceDocument({
               </tbody>
             </table>
 
-            {/* CONDITIONS COMMERCIALES */}
+            {/* ------------------------------------------------------
+                CONDITIONS COMMERCIALES
+                ------------------------------------------------------ */}
+
             {options.terms &&
               (doc.terms || settings?.terms) && (
                 <div
@@ -371,7 +447,9 @@ export function InvoiceDocument({
                     "")
                     .split("\n")
                     .map((t, i) => (
-                      <p key={i}>{t}</p>
+                      <p key={i}>
+                        {t}
+                      </p>
                     ))}
 
                   {settings?.rib && (
@@ -383,7 +461,10 @@ export function InvoiceDocument({
               )}
           </div>
 
-          {/* ==================== NET A PAYER ==================== */}
+          {/* --------------------------------------------------------
+              NET A PAYER + CACHET
+              -------------------------------------------------------- */}
+
           <div className="w-[62mm] shrink-0">
             <div
               className="rounded-lg px-4 py-4 text-center"
@@ -396,7 +477,10 @@ export function InvoiceDocument({
               </p>
 
               <p className="mt-2 text-[13px]">
-                {money(doc.net_to_pay, currency)}
+                {money(
+                  doc.net_to_pay,
+                  currency
+                )}
               </p>
 
               <p className="mt-1 text-[12px] capitalize">
@@ -408,18 +492,22 @@ export function InvoiceDocument({
             </div>
 
             {/* CACHET */}
-            {options.stamp && settings?.stamp_url && (
-              <img
-                src={settings.stamp_url}
-                alt="Cachet"
-                className="mx-auto mt-3 max-h-[32mm]"
-              />
-            )}
+            {options.stamp &&
+              settings?.stamp_url && (
+                <img
+                  src={settings.stamp_url}
+                  alt="Cachet"
+                  className="mx-auto mt-3 max-h-[32mm]"
+                />
+              )}
           </div>
         </div>
       </div>
 
-      {/* ==================== PIED DE PAGE ==================== */}
+      {/* ============================================================
+          PIED DE PAGE
+          ============================================================ */}
+
       {options.footer && (
         <div
           className="relative z-10 px-8 py-3 text-center text-[9.5px] leading-relaxed text-white"
@@ -430,9 +518,11 @@ export function InvoiceDocument({
         >
           <p>
             {settings?.company_name ?? "DODRICOM"}
+
             {settings?.capital
               ? ` au capital de ${settings.capital}`
               : ""}
+
             {settings?.address
               ? ` - Siège social : ${settings.address}`
               : ""}
@@ -442,9 +532,11 @@ export function InvoiceDocument({
             {settings?.phone
               ? `Tél : ${settings.phone} - `
               : ""}
+
             {settings?.email
               ? `E-mail : ${settings.email} - `
               : ""}
+
             {settings?.website
               ? `Web : ${settings.website}`
               : ""}
@@ -454,12 +546,15 @@ export function InvoiceDocument({
             {settings?.rc
               ? `R.C : ${settings.rc} - `
               : ""}
+
             {settings?.if_number
               ? `I.F : ${settings.if_number} - `
               : ""}
+
             {settings?.patente
               ? `Patente : ${settings.patente} - `
               : ""}
+
             {settings?.ice
               ? `ICE : ${settings.ice}`
               : ""}
