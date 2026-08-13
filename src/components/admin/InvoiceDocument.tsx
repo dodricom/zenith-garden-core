@@ -91,12 +91,12 @@ export function InvoiceDocument({
         />
         <div className="relative z-10 flex items-center justify-between gap-6 px-8 py-5">
           <div className="flex items-center">
-            {options.logo && settings?.logo_url ? (
-              <img src={settings.logo_url} alt={settings.company_name} style={{ height: "22mm" }} />
-            ) : (
-              <span className="text-2xl font-black tracking-wide text-white">
-                {settings?.company_name ?? "DODRICOM"}
-              </span>
+           {options.logo && settings?.logo_url && (
+            <img
+             src={settings.logo_url}
+             alt={settings.company_name ?? "DODRICOM"}
+             style={{ height: "22mm" }}
+                 />
             )}
           </div>
           <div className="max-w-[52%] text-right">
