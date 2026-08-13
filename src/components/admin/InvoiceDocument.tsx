@@ -25,10 +25,12 @@ export const DEFAULT_PRINT_OPTIONS: PrintOptions = {
   footer: true,
 };
 
-const NAVY = "#152452";
+/*
+ * Couleurs utilisées uniquement pour les éléments du document
+ * et non pour le fond de la page.
+ */
 const CYAN = "#63c9dd";
 
-/** Rendu A4 fidèle du document administratif (utilisé pour l’aperçu et l’export PDF). */
 export function InvoiceDocument({
   doc,
   lines,
@@ -47,17 +49,6 @@ export function InvoiceDocument({
     (acc[key] ??= []).push(l);
     return acc;
   }, {});
-
-  /*
-   * Si le Logo est désactivé :
-   * - aucun fond NAVY
-   * - aucune courbe CYAN
-   * - aucune image de logo
-   * - aucune image de papier à en-tête
-   *
-   * La page reste donc blanche pour permettre
-   * l'impression sur une feuille EN-TÊTE pré-imprimée.
-   */
 
   return (
     <div
@@ -83,96 +74,34 @@ export function InvoiceDocument({
 
       {/* ============================================================
           EN-TÊTE DU DOCUMENT
+          
+          IMPORTANT :
+          Le fond reste TOUJOURS blanc.
+          Le bouton Logo contrôle uniquement le logo.
           ============================================================ */}
 
       <div
-        className="relative"
+        className="relative bg-white"
         style={{
           minHeight: "34mm",
           backgroundColor: "#ffffff",
         }}
       >
-        {/* ----------------------------------------------------------
-            DESIGN DODRICOM
-            Affiché uniquement lorsque Logo est activé
-            ---------------------------------------------------------- */}
-
-        {options.logo && settings?.logo_url && (
-          <>
-            {/* Bande NAVY */}
-            <div
-              className="absolute left-0 top-0 w-full"
-              style={{
-                height: "25mm",
-                background: NAVY,
-              }}
-            />
-
-            {/* Courbe blanche */}
-            <div
-              className="absolute right-0 top-0"
-              style={{
-                width: "62%",
-                height: "25mm",
-                background: "#ffffff",
-                clipPath: "ellipse(78% 120% at 92% 12%)",
-                zIndex: 1,
-              }}
-            />
-
-            {/* Courbe CYAN */}
-            <div
-              className="absolute right-0 top-0"
-              style={{
-                width: "64%",
-                height: "25mm",
-                background: CYAN,
-                clipPath: "ellipse(78% 120% at 95% 6%)",
-                opacity: 0.9,
-                zIndex: 2,
-              }}
-            />
-
-            {/* Courbe blanche finale */}
-            <div
-              className="absolute right-0 top-0"
-              style={{
-                width: "60%",
-                height: "25mm",
-                background: "#ffffff",
-                clipPath: "ellipse(78% 120% at 96% 2%)",
-                zIndex: 3,
-              }}
-            />
-          </>
-        )}
-
-        {/* ==========================================================
-            CONTENU DE L'EN-TÊTE
-            ========================================================== */}
-
-        <div
-          className={`relative z-10 flex items-center justify-between gap-6 px-8 ${
-            options.logo && settings?.logo_url ? "py-2" : "py-5"
-          }`}
-        >
-          {/* --------------------------------------------------------
+        <div className="relative z-10 flex items-center justify-between gap-6 px-8 py-5">
+          {/* ========================================================
               LOGO
-              -------------------------------------------------------- */}
+              
+              Le logo est indépendant du fond.
+              Aucun NAVY / CYAN n'est ajouté derrière.
+              ======================================================== */}
 
-          <div
-            className={
-              options.logo && settings?.logo_url
-                ? "flex h-[25mm] items-center overflow-hidden"
-                : "flex h-[20mm] items-center"
-            }
-          >
+          <div className="flex items-center">
             {options.logo && settings?.logo_url && (
               <img
                 src={settings.logo_url}
                 alt={settings.company_name ?? "DODRICOM"}
                 style={{
-                  height: "20mm",
+                  height: "22mm",
                   width: "auto",
                   objectFit: "contain",
                   display: "block",
@@ -181,9 +110,9 @@ export function InvoiceDocument({
             )}
           </div>
 
-          {/* --------------------------------------------------------
+          {/* ========================================================
               INFORMATIONS DU DOCUMENT
-              -------------------------------------------------------- */}
+              ======================================================== */}
 
           <div className="max-w-[52%] text-right">
             <p
@@ -225,9 +154,9 @@ export function InvoiceDocument({
           ============================================================ */}
 
       <div className="relative z-10 flex flex-1 flex-col bg-white px-8 pb-6">
-        {/* ----------------------------------------------------------
+        {/* ==========================================================
             DATE
-            ---------------------------------------------------------- */}
+            ========================================================== */}
 
         <div className="mt-4 flex justify-end">
           <span
@@ -242,9 +171,9 @@ export function InvoiceDocument({
           </span>
         </div>
 
-        {/* ----------------------------------------------------------
+        {/* ==========================================================
             TEXTE INTRODUCTIF
-            ---------------------------------------------------------- */}
+            ========================================================== */}
 
         {doc.intro_text && (
           <p
@@ -258,7 +187,7 @@ export function InvoiceDocument({
         )}
 
         {/* ==========================================================
-            TABLEAU DES ARTICLES
+            TABLEAU
             ========================================================== */}
 
         <table className="mt-5 w-full border-collapse text-[12px]">
@@ -293,7 +222,7 @@ export function InvoiceDocument({
           <tbody>
             {Object.entries(sections).map(([section, rows]) => (
               <Fragment key={section || "_"}>
-                {/* Nom de section */}
+                {/* Section */}
                 {section && (
                   <tr>
                     <td
@@ -364,7 +293,7 @@ export function InvoiceDocument({
 
         <div className="mt-8 flex items-start justify-between gap-6">
           {/* --------------------------------------------------------
-              TABLEAU TOTALS
+              Tableau des totaux
               -------------------------------------------------------- */}
 
           <div className="flex-1">
@@ -426,9 +355,9 @@ export function InvoiceDocument({
               </tbody>
             </table>
 
-            {/* ------------------------------------------------------
+            {/* ======================================================
                 CONDITIONS COMMERCIALES
-                ------------------------------------------------------ */}
+                ====================================================== */}
 
             {options.terms &&
               (doc.terms || settings?.terms) && (
@@ -491,7 +420,7 @@ export function InvoiceDocument({
               </p>
             </div>
 
-            {/* CACHET */}
+            {/* Cachet */}
             {options.stamp &&
               settings?.stamp_url && (
                 <img
@@ -510,9 +439,8 @@ export function InvoiceDocument({
 
       {options.footer && (
         <div
-          className="relative z-10 px-8 py-3 text-center text-[9.5px] leading-relaxed text-white"
+          className="relative z-10 bg-[#152452] px-8 py-3 text-center text-[9.5px] leading-relaxed text-white"
           style={{
-            background: NAVY,
             fontFamily: "Arial, sans-serif",
           }}
         >
