@@ -14,6 +14,10 @@ export interface AuthUser {
   roles: Role[];
   /** Convenience initials for avatars ("DR"). */
   username: string;
+  /** Modules explicitement autorisés (null = permissions par rôle). */
+  modules: ModuleKey[] | null;
+  /** Peut consulter le front-office pendant la maintenance. */
+  maintenanceAccess: boolean;
 }
 
 export type ModuleKey =
@@ -82,9 +86,10 @@ function initialsFor(displayName: string, email: string) {
 }
 
 async function hydrateUser(userId: string, email: string): Promise<AuthUser | null> {
-  const [profileRes, rolesRes] = await Promise.all([
+  const [profileRes, rolesRes, permRes] = await Promise.all([
     supabase.from("profiles").select("display_name, avatar_url, email").eq("id", userId).maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", userId),
+    supabase.from("user_permissions").select("modules, maintenance_access").eq("user_id", userId).maybeSingle(),
   ]);
   const profile = profileRes.data;
   const roles = (rolesRes.data ?? []).map((r) => r.role as Role);
@@ -100,6 +105,10 @@ async function hydrateUser(userId: string, email: string): Promise<AuthUser | nu
     role: primary,
     roles,
     username: initialsFor(displayName, email),
+    modules: Array.isArray(permRes.data?.modules) && (permRes.data?.modules as ModuleKey[]).length
+      ? (permRes.data?.modules as ModuleKey[])
+      : null,
+    maintenanceAccess: Boolean(permRes.data?.maintenance_access),
   };
 }
 
@@ -193,6 +202,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const can: AuthContextValue["can"] = (m) => {
     if (!user) return false;
+    if (user.roles.includes("super_admin")) return true;
+    if (user.modules) return user.modules.includes(m);
     return user.roles.some((r) => ROLE_PERMISSIONS[r]?.includes(m));
   };
 
