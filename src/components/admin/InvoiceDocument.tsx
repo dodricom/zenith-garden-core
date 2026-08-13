@@ -358,18 +358,38 @@ export function InvoiceDocument({
                     {/* Section */}
 
                     {section && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-3 pt-4 text-[13px] font-bold"
-                          style={{
-                            color: "#3aa3bd",
-                          }}
-                        >
-                          {section}
-                        </td>
-                      </tr>
-                    )}
+  <tr>
+    {/* Désignation / Section */}
+    <td
+      className="px-3 pt-4 pb-1 text-[13px] font-bold"
+      style={{
+        color: "#3aa3bd",
+        borderRight: `1px solid ${CYAN}`,
+      }}
+    >
+      {section}
+    </td>
+
+    {/* Prix U */}
+    <td
+      className="pt-4 pb-1"
+      style={{
+        borderRight: `1px solid ${CYAN}`,
+      }}
+    />
+
+    {/* Qté */}
+    <td
+      className="pt-4 pb-1"
+      style={{
+        borderRight: `1px solid ${CYAN}`,
+      }}
+    />
+
+    {/* Prix Total */}
+    <td className="pt-4 pb-1" />
+  </tr>
+)}
 
                     {/* Lignes */}
 
