@@ -29,13 +29,19 @@ const NAVY = "#152452";
 const CYAN = "#63c9dd";
 
 /**
- * Rendu A4 du document administratif.
+ * Document administratif A4.
  *
- * Comportement :
- * - Logo seul = fond blanc complet.
- * - Papier en-tête = affiché uniquement dans la zone supérieure.
- * - Le logo ne se répète pas lorsque le papier en-tête est activé.
- * - Les informations client sont centrées à droite.
+ * LOGO :
+ * - Affiché uniquement si Logo est activé
+ * - Si Papier en-tête est actif, le logo séparé ne s'affiche pas
+ *
+ * PAPIER EN-TÊTE :
+ * - Affiché uniquement dans la zone supérieure
+ * - Ne couvre pas toute la page
+ *
+ * FOND :
+ * - Toujours blanc sous le header
+ * - Aucun fond bleu lorsque Papier en-tête est désactivé
  */
 export function InvoiceDocument({
   doc,
@@ -71,42 +77,13 @@ export function InvoiceDocument({
       }}
     >
       {/* ============================================================
-          PAPIER EN-TÊTE
-          
-          Le papier en-tête est limité à la partie supérieure.
-          Il ne couvre jamais toute la page A4.
-          ============================================================ */}
-
-      {options.letterhead && settings?.letterhead_url && (
-        <div
-          className="pointer-events-none absolute left-0 top-0 w-full overflow-hidden"
-          style={{
-            height: "48mm",
-            zIndex: 0,
-          }}
-        >
-          <img
-            src={settings.letterhead_url}
-            alt=""
-            style={{
-              width: "100%",
-              height: "auto",
-              display: "block",
-              objectFit: "contain",
-              objectPosition: "top center",
-            }}
-          />
-        </div>
-      )}
-
-      {/* ============================================================
           CONTENU PRINCIPAL
           ============================================================ */}
 
       <div
         className="relative z-10 flex flex-1 flex-col"
         style={{
-          backgroundColor: "transparent",
+          backgroundColor: "#ffffff",
         }}
       >
         {/* ==========================================================
@@ -117,16 +94,53 @@ export function InvoiceDocument({
           className="relative"
           style={{
             minHeight: "48mm",
-            backgroundColor: "#ffffff",
+            backgroundColor: options.letterhead
+              ? "transparent"
+              : "#ffffff",
+            overflow: "hidden",
           }}
         >
           {/* ========================================================
-              LOGO
+              PAPIER EN-TÊTE
 
               IMPORTANT :
-              Le logo est indépendant du fond.
+              L'image est maintenant DANS le Header.
+              Elle ne peut donc plus disparaître derrière
+              le fond blanc de la page.
+              ======================================================== */}
+
+          {options.letterhead &&
+            settings?.letterhead_url && (
+              <div
+                className="absolute left-0 top-0 w-full overflow-hidden"
+                style={{
+                  height: "48mm",
+                  zIndex: 0,
+                }}
+              >
+                <img
+                  src={settings.letterhead_url}
+                  alt=""
+                  style={{
+                    width: "100%",
+                    height: "48mm",
+                    display: "block",
+                    objectFit: "cover",
+                    objectPosition: "top center",
+                  }}
+                />
+              </div>
+            )}
+
+          {/* ========================================================
+              LOGO SEUL
+
               Lorsque Papier en-tête est désactivé,
-              il apparaît directement sur fond blanc.
+              le logo apparaît directement sur fond blanc.
+
+              Aucun fond bleu.
+              Aucune courbe.
+              Aucun arrière-plan.
               ======================================================== */}
 
           <div
@@ -174,10 +188,12 @@ export function InvoiceDocument({
                 width: "82mm",
                 marginLeft: "auto",
                 paddingTop: "3mm",
+                position: "relative",
+                zIndex: 10,
               }}
             >
               {/* ----------------------------------------------------
-                  Numéro document
+                  NUMÉRO DU DOCUMENT
                   ---------------------------------------------------- */}
 
               <p
@@ -192,7 +208,7 @@ export function InvoiceDocument({
               </p>
 
               {/* ----------------------------------------------------
-                  Nom client
+                  CLIENT
                   ---------------------------------------------------- */}
 
               <p
@@ -207,7 +223,7 @@ export function InvoiceDocument({
               </p>
 
               {/* ----------------------------------------------------
-                  Adresse
+                  ADRESSE
                   ---------------------------------------------------- */}
 
               {doc.client_address && (
@@ -241,7 +257,7 @@ export function InvoiceDocument({
               )}
 
               {/* ----------------------------------------------------
-                  Bon de commande
+                  BON DE COMMANDE
                   ---------------------------------------------------- */}
 
               {doc.order_ref && (
@@ -267,7 +283,7 @@ export function InvoiceDocument({
         <div
           className="relative z-10 flex flex-1 flex-col px-8 pb-6"
           style={{
-            backgroundColor: "transparent",
+            backgroundColor: "#ffffff",
           }}
         >
           {/* ========================================================
@@ -303,7 +319,7 @@ export function InvoiceDocument({
           )}
 
           {/* ========================================================
-              TABLEAU DES ARTICLES
+              TABLEAU
               ======================================================== */}
 
           <table className="mt-5 w-full border-collapse text-[12px]">
@@ -339,6 +355,8 @@ export function InvoiceDocument({
               {Object.entries(sections).map(
                 ([section, rows]) => (
                   <Fragment key={section || "_"}>
+                    {/* Section */}
+
                     {section && (
                       <tr>
                         <td
@@ -353,6 +371,8 @@ export function InvoiceDocument({
                       </tr>
                     )}
 
+                    {/* Lignes */}
+
                     {rows.map((line, index) => (
                       <tr
                         key={
@@ -363,7 +383,8 @@ export function InvoiceDocument({
                         <td
                           className="px-3 py-2 font-semibold"
                           style={{
-                            borderRight: `1px solid ${CYAN}`,
+                            borderRight:
+                              `1px solid ${CYAN}`,
                           }}
                         >
                           {line.designation}
@@ -372,7 +393,8 @@ export function InvoiceDocument({
                         <td
                           className="px-3 py-2 text-center"
                           style={{
-                            borderRight: `1px solid ${CYAN}`,
+                            borderRight:
+                              `1px solid ${CYAN}`,
                           }}
                         >
                           {Number(line.unit_price)
@@ -383,7 +405,8 @@ export function InvoiceDocument({
                         <td
                           className="px-3 py-2 text-center"
                           style={{
-                            borderRight: `1px solid ${CYAN}`,
+                            borderRight:
+                              `1px solid ${CYAN}`,
                           }}
                         >
                           {line.unit &&
@@ -420,7 +443,7 @@ export function InvoiceDocument({
 
           <div className="mt-8 flex items-start justify-between gap-6">
             {/* ======================================================
-                TOTALS + CONDITIONS
+                TOTAUX + CONDITIONS
                 ====================================================== */}
 
             <div className="flex-1">
@@ -532,7 +555,7 @@ export function InvoiceDocument({
             </div>
 
             {/* ======================================================
-                NET A PAYER + CACHET
+                NET A PAYER
                 ====================================================== */}
 
             <div className="w-[62mm] shrink-0">
