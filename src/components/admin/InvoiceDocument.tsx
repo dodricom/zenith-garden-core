@@ -28,14 +28,6 @@ export const DEFAULT_PRINT_OPTIONS: PrintOptions = {
 const NAVY = "#152452";
 const CYAN = "#63c9dd";
 
-/**
- * Rendu A4 du document administratif.
- *
- * - Le papier reste blanc sous le Header.
- * - Le logo est indépendant du nom de société.
- * - Le papier en-tête est indépendant du logo.
- * - Les informations client sont centrées à droite.
- */
 export function InvoiceDocument({
   doc,
   lines,
@@ -64,25 +56,28 @@ export function InvoiceDocument({
       style={{
         width: "210mm",
         minHeight: "297mm",
-        fontFamily: "Georgia, 'Times New Roman', serif",
+        fontFamily:
+          "Georgia, 'Times New Roman', serif",
         overflow: "hidden",
+        backgroundColor: "#ffffff",
       }}
     >
       {/* ============================================================
           PAPIER EN-TÊTE
           ============================================================ */}
 
-      {options.letterhead && settings?.letterhead_url && (
-        <img
-          src={settings.letterhead_url}
-          alt=""
-          className="pointer-events-none absolute inset-0 h-full w-full"
-          style={{
-            zIndex: 0,
-            objectFit: "cover",
-          }}
-        />
-      )}
+      {options.letterhead &&
+        settings?.letterhead_url && (
+          <img
+            src={settings.letterhead_url}
+            alt=""
+            className="pointer-events-none absolute inset-0 h-full w-full"
+            style={{
+              zIndex: 0,
+              objectFit: "cover",
+            }}
+          />
+        )}
 
       {/* ============================================================
           CONTENU PRINCIPAL
@@ -102,67 +97,31 @@ export function InvoiceDocument({
           className="relative"
           style={{
             minHeight: "48mm",
-            backgroundColor: "transparent",
+            backgroundColor: "#ffffff",
           }}
         >
-          {/* --------------------------------------------------------
-              FORMES DU HEADER
-              -------------------------------------------------------- */}
+          {/* ========================================================
+              IMPORTANT :
+              AUCUN fond bleu ou cyan ici.
 
-          {!options.letterhead && (
-            <>
-              {/* Fond bleu */}
-              <div
-                className="absolute left-0 top-0 h-full"
-                style={{
-                  width: "100%",
-                  background: NAVY,
-                  zIndex: 0,
-                }}
-              />
+              Lorsque Papier en-tête est désactivé,
+              le Header reste complètement blanc.
 
-              {/* Courbe blanche */}
-              <div
-                className="absolute right-0 top-0 h-full"
-                style={{
-                  width: "62%",
-                  background: "#ffffff",
-                  clipPath:
-                    "ellipse(78% 120% at 92% 12%)",
-                  zIndex: 1,
-                }}
-              />
+              Le Logo et les informations du client
+              sont indépendants du fond.
+              ======================================================== */}
 
-              {/* Courbe cyan */}
-              <div
-                className="absolute right-0 top-0 h-full"
-                style={{
-                  width: "64%",
-                  background: CYAN,
-                  clipPath:
-                    "ellipse(78% 120% at 95% 6%)",
-                  opacity: 0.9,
-                  zIndex: 2,
-                }}
-              />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: "#ffffff",
+              zIndex: 0,
+            }}
+          />
 
-              {/* Deuxième courbe blanche */}
-              <div
-                className="absolute right-0 top-0 h-full"
-                style={{
-                  width: "60%",
-                  background: "#ffffff",
-                  clipPath:
-                    "ellipse(78% 120% at 96% 2%)",
-                  zIndex: 3,
-                }}
-              />
-            </>
-          )}
-
-          {/* --------------------------------------------------------
-              CONTENU HEADER
-              -------------------------------------------------------- */}
+          {/* ========================================================
+              CONTENU DU HEADER
+              ======================================================== */}
 
           <div
             className="relative z-10 flex items-start justify-between gap-6 px-8"
@@ -181,24 +140,26 @@ export function InvoiceDocument({
                 minHeight: "32mm",
               }}
             >
-              {options.logo && settings?.logo_url && (
-                <img
-                  src={settings.logo_url}
-                  alt=""
-                  style={{
-                    height: "32mm",
-                    width: "auto",
-                    maxWidth: "85mm",
-                    objectFit: "contain",
-                    objectPosition: "left center",
-                    display: "block",
-                  }}
-                />
-              )}
+              {options.logo &&
+                settings?.logo_url && (
+                  <img
+                    src={settings.logo_url}
+                    alt=""
+                    style={{
+                      height: "32mm",
+                      width: "auto",
+                      maxWidth: "85mm",
+                      objectFit: "contain",
+                      objectPosition:
+                        "left center",
+                      display: "block",
+                    }}
+                  />
+                )}
             </div>
 
             {/* ======================================================
-                INFORMATIONS DU CLIENT
+                INFORMATIONS CLIENT
                 ====================================================== */}
 
             <div
@@ -218,7 +179,10 @@ export function InvoiceDocument({
                   whiteSpace: "nowrap",
                 }}
               >
-                {docTitle(doc.doc_type)} N° {doc.number}
+                {docTitle(
+                  doc.doc_type,
+                )}{" "}
+                N° {doc.number}
               </p>
 
               {/* Nom du client */}
@@ -257,7 +221,8 @@ export function InvoiceDocument({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  ICE&nbsp;&nbsp;{doc.client_ice}
+                  ICE&nbsp;&nbsp;
+                  {doc.client_ice}
                 </p>
               )}
 
@@ -286,7 +251,8 @@ export function InvoiceDocument({
         <div
           className="relative z-10 flex flex-1 flex-col px-8 pb-6"
           style={{
-            backgroundColor: "transparent",
+            backgroundColor:
+              "transparent",
           }}
         >
           {/* ========================================================
@@ -300,9 +266,12 @@ export function InvoiceDocument({
                 background: CYAN,
               }}
             >
-              {(doc.city || "Casablanca") +
+              {(doc.city ||
+                "Casablanca") +
                 ", " +
-                formatDateFr(doc.issue_date)}
+                formatDateFr(
+                  doc.issue_date,
+                )}
             </span>
           </div>
 
@@ -323,7 +292,7 @@ export function InvoiceDocument({
           )}
 
           {/* ========================================================
-              TABLEAU DES ARTICLES
+              TABLEAU
               ======================================================== */}
 
           <table className="mt-5 w-full border-collapse text-[12px]">
@@ -356,19 +325,24 @@ export function InvoiceDocument({
             </thead>
 
             <tbody>
-              {Object.entries(sections).map(
+              {Object.entries(
+                sections,
+              ).map(
                 ([section, rows]) => (
                   <Fragment
-                    key={section || "_"}
+                    key={
+                      section || "_"
+                    }
                   >
-                    {/* Nom de section */}
+                    {/* Section */}
                     {section && (
                       <tr>
                         <td
                           colSpan={4}
                           className="px-3 pt-4 text-[13px] font-bold"
                           style={{
-                            color: "#3aa3bd",
+                            color:
+                              "#3aa3bd",
                           }}
                         >
                           {section}
@@ -377,70 +351,79 @@ export function InvoiceDocument({
                     )}
 
                     {/* Lignes */}
-                    {rows.map((l, i) => (
-                      <tr
-                        key={
-                          l.id ??
-                          `${section}-${i}`
-                        }
-                      >
-                        <td
-                          className="px-3 py-2 font-semibold"
-                          style={{
-                            borderRight:
-                              `1px solid ${CYAN}`,
-                          }}
+                    {rows.map(
+                      (l, i) => (
+                        <tr
+                          key={
+                            l.id ??
+                            `${section}-${i}`
+                          }
                         >
-                          {l.designation}
-                        </td>
+                          <td
+                            className="px-3 py-2 font-semibold"
+                            style={{
+                              borderRight:
+                                `1px solid ${CYAN}`,
+                            }}
+                          >
+                            {
+                              l.designation
+                            }
+                          </td>
 
-                        <td
-                          className="px-3 py-2 text-center"
-                          style={{
-                            borderRight:
-                              `1px solid ${CYAN}`,
-                          }}
-                        >
-                          {Number(
-                            l.unit_price,
-                          )
-                            .toFixed(2)
-                            .replace(
-                              ".",
-                              ",",
-                            )}
-                        </td>
-
-                        <td
-                          className="px-3 py-2 text-center"
-                          style={{
-                            borderRight:
-                              `1px solid ${CYAN}`,
-                          }}
-                        >
-                          {l.unit &&
-                          l.unit !== ""
-                            ? l.unit
-                            : l.quantity}
-                        </td>
-
-                        <td className="px-3 py-2 text-center">
-                          {(
-                            Number(
+                          <td
+                            className="px-3 py-2 text-center"
+                            style={{
+                              borderRight:
+                                `1px solid ${CYAN}`,
+                            }}
+                          >
+                            {Number(
                               l.unit_price,
-                            ) *
-                            Number(
-                              l.quantity,
                             )
-                          )
-                            .toFixed(2)
-                            .replace(
-                              ".",
-                              ",",
-                            )}
-                        </td>
-                      </tr>
-                    ))}
+                              .toFixed(
+                                2,
+                              )
+                              .replace(
+                                ".",
+                                ",",
+                              )}
+                          </td>
+
+                          <td
+                            className="px-3 py-2 text-center"
+                            style={{
+                              borderRight:
+                                `1px solid ${CYAN}`,
+                            }}
+                          >
+                            {l.unit &&
+                            l.unit !==
+                              ""
+                              ? l.unit
+                              : l.quantity}
+                          </td>
+
+                          <td className="px-3 py-2 text-center">
+                            {(
+                              Number(
+                                l.unit_price,
+                              ) *
+                              Number(
+                                l.quantity,
+                              )
+                            )
+                              .toFixed(
+                                2,
+                              )
+                              .replace(
+                                ".",
+                                ",",
+                              )}
+                          </td>
+                        </tr>
+                      ),
+                    )}
                   </Fragment>
                 ),
               )}
@@ -448,7 +431,7 @@ export function InvoiceDocument({
           </table>
 
           {/* ========================================================
-              ESPACE AVANT TOTAUX
+              ESPACE
               ======================================================== */}
 
           <div className="flex-1" />
@@ -458,16 +441,17 @@ export function InvoiceDocument({
               ======================================================== */}
 
           <div className="mt-8 flex items-start justify-between gap-6">
-            {/* ------------------------------------------------------
-                TOTAUX + CONDITIONS
-                ------------------------------------------------------ */}
+            {/* ======================================================
+                TOTALS + CONDITIONS
+                ====================================================== */}
 
             <div className="flex-1">
               <table className="w-full border-collapse text-center text-[11.5px]">
                 <thead>
                   <tr
                     style={{
-                      background: "#bfe4ee",
+                      background:
+                        "#bfe4ee",
                     }}
                   >
                     <th className="rounded-l-lg px-2 py-1.5">
@@ -495,7 +479,8 @@ export function InvoiceDocument({
                 <tbody>
                   <tr
                     style={{
-                      background: "#fdf6cf",
+                      background:
+                        "#fdf6cf",
                     }}
                   >
                     <td className="px-2 py-1.5 font-semibold">
@@ -536,7 +521,10 @@ export function InvoiceDocument({
                 </tbody>
               </table>
 
-              {/* Conditions commerciales */}
+              {/* ====================================================
+                  CONDITIONS COMMERCIALES
+                  ==================================================== */}
+
               {options.terms &&
                 (doc.terms ||
                   settings?.terms) && (
@@ -548,7 +536,8 @@ export function InvoiceDocument({
                     }}
                   >
                     <p className="mb-1 font-bold">
-                      CONDITIONS COMMERCIALES :
+                      CONDITIONS
+                      COMMERCIALES :
                     </p>
 
                     {(
@@ -557,25 +546,29 @@ export function InvoiceDocument({
                       ""
                     )
                       .split("\n")
-                      .map((t, i) => (
-                        <p key={i}>
-                          {t}
-                        </p>
-                      ))}
+                      .map(
+                        (t, i) => (
+                          <p key={i}>
+                            {t}
+                          </p>
+                        ),
+                      )}
 
                     {settings?.rib && (
                       <p>
                         - RIB :{" "}
-                        {settings.rib}
+                        {
+                          settings.rib
+                        }
                       </p>
                     )}
                   </div>
                 )}
             </div>
 
-            {/* ------------------------------------------------------
+            {/* ======================================================
                 NET A PAYER
-                ------------------------------------------------------ */}
+                ====================================================== */}
 
             <div className="w-[62mm] shrink-0">
               <div
