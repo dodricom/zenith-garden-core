@@ -57,7 +57,7 @@ export function InvoiceDocument({
         fontFamily: "Georgia, 'Times New Roman', serif",
       }}
     >
-      {/* Papier en-tête */}
+      {/* ==================== PAPIER EN-TÊTE ==================== */}
       {options.letterhead && settings?.letterhead_url && (
         <img
           src={settings.letterhead_url}
@@ -70,61 +70,74 @@ export function InvoiceDocument({
       <div
         className="relative"
         style={{
-          background: NAVY,
           minHeight: "34mm",
+          background: "#fff",
         }}
       >
-        {/* Courbe blanche */}
+        {/* ==================== BANDE NAVY ==================== */}
         <div
-          className="absolute right-0 top-0 h-full"
+          className="absolute left-0 top-0 h-[25mm] w-full"
+          style={{
+            background: NAVY,
+          }}
+        />
+
+        {/* ==================== COURBE BLANCHE ==================== */}
+        <div
+          className="absolute right-0 top-0 h-[25mm]"
           style={{
             width: "62%",
             background: "#fff",
             clipPath: "ellipse(78% 120% at 92% 12%)",
+            zIndex: 1,
           }}
         />
 
-        {/* Courbe cyan */}
+        {/* ==================== COURBE CYAN ==================== */}
         <div
-          className="absolute right-0 top-0 h-full"
+          className="absolute right-0 top-0 h-[25mm]"
           style={{
             width: "64%",
             background: CYAN,
             clipPath: "ellipse(78% 120% at 95% 6%)",
             opacity: 0.9,
-            zIndex: 0,
+            zIndex: 2,
           }}
         />
 
-        {/* Courbe blanche finale */}
+        {/* ==================== COURBE BLANCHE FINALE ==================== */}
         <div
-          className="absolute right-0 top-0 h-full"
+          className="absolute right-0 top-0 h-[25mm]"
           style={{
             width: "60%",
             background: "#fff",
             clipPath: "ellipse(78% 120% at 96% 2%)",
-            zIndex: 1,
+            zIndex: 3,
           }}
         />
 
-        {/* Contenu de l'en-tête */}
+        {/* ==================== CONTENU HEADER ==================== */}
         <div className="relative z-10 flex items-center justify-between gap-6 px-8 py-5">
-          {/* Logo */}
+          {/* LOGO */}
           <div className="flex items-center">
             {options.logo && settings?.logo_url && (
               <img
                 src={settings.logo_url}
                 alt={settings.company_name ?? "DODRICOM"}
-                style={{ height: "22mm" }}
+                style={{
+                  height: "22mm",
+                }}
               />
             )}
           </div>
 
-          {/* Informations du devis */}
+          {/* INFORMATIONS DU DEVIS */}
           <div className="max-w-[52%] text-right">
             <p
               className="text-[19px] font-bold"
-              style={{ color: "#111" }}
+              style={{
+                color: "#111",
+              }}
             >
               {docTitle(doc.doc_type)} N° {doc.number}
             </p>
@@ -156,11 +169,13 @@ export function InvoiceDocument({
 
       {/* ==================== CONTENU ==================== */}
       <div className="relative z-10 flex flex-1 flex-col px-8 pb-6">
-        {/* Date */}
+        {/* DATE */}
         <div className="mt-4 flex justify-end">
           <span
             className="rounded-full px-6 py-1.5 text-[13px] font-bold text-white"
-            style={{ background: CYAN }}
+            style={{
+              background: CYAN,
+            }}
           >
             {(doc.city || "Casablanca") +
               ", " +
@@ -168,11 +183,13 @@ export function InvoiceDocument({
           </span>
         </div>
 
-        {/* Introduction */}
+        {/* TEXTE INTRODUCTIF */}
         {doc.intro_text && (
           <p
             className="mt-5 text-[12.5px] leading-relaxed"
-            style={{ fontFamily: "Arial, sans-serif" }}
+            style={{
+              fontFamily: "Arial, sans-serif",
+            }}
           >
             {doc.intro_text}
           </p>
@@ -181,7 +198,11 @@ export function InvoiceDocument({
         {/* ==================== TABLEAU ==================== */}
         <table className="mt-5 w-full border-collapse text-[12px]">
           <thead>
-            <tr style={{ background: "#bfe4ee" }}>
+            <tr
+              style={{
+                background: "#bfe4ee",
+              }}
+            >
               <th className="rounded-l-xl px-3 py-2.5 text-left font-bold">
                 Désignation
               </th>
@@ -207,20 +228,22 @@ export function InvoiceDocument({
           <tbody>
             {Object.entries(sections).map(([section, rows]) => (
               <Fragment key={section || "_"}>
-                {/* Section */}
+                {/* SECTION */}
                 {section && (
                   <tr>
                     <td
                       colSpan={4}
                       className="px-3 pt-4 text-[13px] font-bold"
-                      style={{ color: "#3aa3bd" }}
+                      style={{
+                        color: "#3aa3bd",
+                      }}
                     >
                       {section}
                     </td>
                   </tr>
                 )}
 
-                {/* Lignes */}
+                {/* LIGNES */}
                 {rows.map((l, i) => (
                   <tr key={l.id ?? `${section}-${i}`}>
                     <td
@@ -274,7 +297,11 @@ export function InvoiceDocument({
           <div className="flex-1">
             <table className="w-full border-collapse text-center text-[11.5px]">
               <thead>
-                <tr style={{ background: "#bfe4ee" }}>
+                <tr
+                  style={{
+                    background: "#bfe4ee",
+                  }}
+                >
                   <th className="rounded-l-lg px-2 py-1.5">
                     Total HT
                   </th>
@@ -298,7 +325,11 @@ export function InvoiceDocument({
               </thead>
 
               <tbody>
-                <tr style={{ background: "#fdf6cf" }}>
+                <tr
+                  style={{
+                    background: "#fdf6cf",
+                  }}
+                >
                   <td className="px-2 py-1.5 font-semibold">
                     {money(doc.total_ht, currency)}
                   </td>
@@ -322,12 +353,14 @@ export function InvoiceDocument({
               </tbody>
             </table>
 
-            {/* Conditions commerciales */}
+            {/* CONDITIONS COMMERCIALES */}
             {options.terms &&
               (doc.terms || settings?.terms) && (
                 <div
                   className="mt-4 rounded-lg px-4 py-3 text-[11.5px]"
-                  style={{ background: "#cfe4e4" }}
+                  style={{
+                    background: "#cfe4e4",
+                  }}
                 >
                   <p className="mb-1 font-bold">
                     CONDITIONS COMMERCIALES :
@@ -342,17 +375,21 @@ export function InvoiceDocument({
                     ))}
 
                   {settings?.rib && (
-                    <p>- RIB : {settings.rib}</p>
+                    <p>
+                      - RIB : {settings.rib}
+                    </p>
                   )}
                 </div>
               )}
           </div>
 
-          {/* Net à payer + cachet */}
+          {/* ==================== NET A PAYER ==================== */}
           <div className="w-[62mm] shrink-0">
             <div
               className="rounded-lg px-4 py-4 text-center"
-              style={{ background: "#b9d4d4" }}
+              style={{
+                background: "#b9d4d4",
+              }}
             >
               <p className="text-[14px] font-bold">
                 NET A PAYER
@@ -370,6 +407,7 @@ export function InvoiceDocument({
               </p>
             </div>
 
+            {/* CACHET */}
             {options.stamp && settings?.stamp_url && (
               <img
                 src={settings.stamp_url}
