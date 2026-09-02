@@ -10,7 +10,7 @@ export const btnCls =
 export const btnPrimary =
   "inline-flex items-center gap-2 rounded-xl bg-[var(--gradient-brand)] px-4 py-2 text-xs font-semibold text-white shadow-[0_0_20px_rgba(139,61,255,0.35)] transition hover:opacity-90";
 
-export function fmt(n: number, currency = L.currency) {
+export function fmt(n: number, currency: string = L.currency) {
   return money(Number(n || 0), currency);
 }
 
