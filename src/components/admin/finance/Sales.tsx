@@ -55,9 +55,9 @@ export function FinanceSales({
               className={`${inputCls} h-9 w-40 py-1.5`}
             >
               <option value="all">Tous les statuts</option>
-              {Object.entries(SALES_STATUS_META).map(([k, v]) => (
+              {(Object.keys(SALES_STATUS_META) as SalesRow["computedStatus"][]).map((k) => (
                 <option key={k} value={k}>
-                  {v.label}
+                  {SALES_STATUS_META[k].label}
                 </option>
               ))}
             </select>
