@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Badge, DataTable, Kpi, Panel, Td, btnCls, fmt, inputCls } from "./ui";
 import type { Scope, Selectors } from "./scope";
-import { SALES_STATUS_META, docLabelSafe } from "./helpers";
+import { SALES_STATUS_META, type SalesRow } from "@/lib/finance";
+import { docLabel as docLabelSafe } from "@/lib/billing";
 import { exportCsv } from "@/lib/finance-data";
 
 export function FinanceSales({
