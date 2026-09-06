@@ -269,12 +269,20 @@
     overflow: visible !important;
     background: #ffffff !important;
   }
-  body * {
-    visibility: hidden !important;
+
+  /*
+   * On supprime du flux tout élément qui n'est ni un ancêtre ni un
+   * descendant du document à imprimer : évite les pages blanches
+   * créées par le contenu de l'admin (visibility:hidden garde la place).
+   */
+  body *:not(:has(.print-root)):not(.print-root):not(.print-root *) {
+    display: none !important;
   }
+
   .no-print {
     display: none !important;
   }
+
   .print-modal {
     position: static !important;
     inset: auto !important;
@@ -285,19 +293,26 @@
     overflow: visible !important;
     max-width: none !important;
     width: auto !important;
+    height: auto !important;
   }
+
+  /* Conserve les couleurs de fond (bandeaux cyan, pied de page bleu nuit…) */
   .print-root,
   .print-root * {
-    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
   .print-root {
     display: block !important;
     gap: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
+
   .print-page {
     width: 210mm !important;
-    height: 297mm !important;
+    height: 296.8mm !important; /* légèrement < 297mm pour éviter le débordement d'une page blanche */
     margin: 0 !important;
     box-shadow: none !important;
     overflow: hidden !important;
@@ -310,6 +325,7 @@
     break-after: auto;
     page-break-after: auto;
   }
+
   @page {
     size: A4;
     margin: 0;
