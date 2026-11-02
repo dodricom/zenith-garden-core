@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -439,6 +439,7 @@ export type Database = {
           created_at: string
           currency: string
           default_vat: number
+          delivery_fee: number
           email: string | null
           ice: string | null
           id: string
@@ -461,6 +462,7 @@ export type Database = {
           created_at?: string
           currency?: string
           default_vat?: number
+          delivery_fee?: number
           email?: string | null
           ice?: string | null
           id?: string
@@ -483,6 +485,7 @@ export type Database = {
           created_at?: string
           currency?: string
           default_vat?: number
+          delivery_fee?: number
           email?: string | null
           ice?: string | null
           id?: string
@@ -570,43 +573,73 @@ export type Database = {
       }
       contact_messages: {
         Row: {
+          billing_document_id: string | null
           company: string | null
           created_at: string
           email: string
           full_name: string
           handled_by: string | null
           id: string
+          invoice_document_id: string | null
           message: string
+          order_document_number: string | null
+          order_payload: Json | null
+          order_reference: string | null
+          order_status: string | null
+          payment_method: string | null
+          payment_receipt_path: string | null
           phone: string | null
+          pickup_expires_at: string | null
           service_interest: string | null
+          shipping_fee: number
           status: Database["public"]["Enums"]["message_status"]
           subject: string | null
           updated_at: string
         }
         Insert: {
+          billing_document_id?: string | null
           company?: string | null
           created_at?: string
           email: string
           full_name: string
           handled_by?: string | null
           id?: string
+          invoice_document_id?: string | null
           message: string
+          order_document_number?: string | null
+          order_payload?: Json | null
+          order_reference?: string | null
+          order_status?: string | null
+          payment_method?: string | null
+          payment_receipt_path?: string | null
           phone?: string | null
+          pickup_expires_at?: string | null
           service_interest?: string | null
+          shipping_fee?: number
           status?: Database["public"]["Enums"]["message_status"]
           subject?: string | null
           updated_at?: string
         }
         Update: {
+          billing_document_id?: string | null
           company?: string | null
           created_at?: string
           email?: string
           full_name?: string
           handled_by?: string | null
           id?: string
+          invoice_document_id?: string | null
           message?: string
+          order_document_number?: string | null
+          order_payload?: Json | null
+          order_reference?: string | null
+          order_status?: string | null
+          payment_method?: string | null
+          payment_receipt_path?: string | null
           phone?: string | null
+          pickup_expires_at?: string | null
           service_interest?: string | null
+          shipping_fee?: number
           status?: Database["public"]["Enums"]["message_status"]
           subject?: string | null
           updated_at?: string
@@ -680,6 +713,115 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      dodripub_devices: {
+        Row: {
+          created_at: string
+          device_number: string
+          id: string
+          session_expires_at: string | null
+          session_token: string | null
+          subscription_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_number?: string
+          id?: string
+          session_expires_at?: string | null
+          session_token?: string | null
+          subscription_id: string
+        }
+        Update: {
+          created_at?: string
+          device_number?: string
+          id?: string
+          session_expires_at?: string | null
+          session_token?: string | null
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dodripub_devices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "saas_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dodripub_media: {
+        Row: {
+          created_at: string
+          id: string
+          mime_type: string
+          size_bytes: number
+          status: string
+          storage_path: string
+          subscription_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mime_type: string
+          size_bytes: number
+          status?: string
+          storage_path: string
+          subscription_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mime_type?: string
+          size_bytes?: number
+          status?: string
+          storage_path?: string
+          subscription_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dodripub_media_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "saas_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dodripub_playlist_items: {
+        Row: {
+          device_id: string
+          media_id: string
+          position: number
+        }
+        Insert: {
+          device_id: string
+          media_id: string
+          position: number
+        }
+        Update: {
+          device_id?: string
+          media_id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dodripub_playlist_items_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "dodripub_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dodripub_playlist_items_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "dodripub_media"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       expense_categories: {
         Row: {
@@ -1561,6 +1703,147 @@ export type Database = {
           },
         ]
       }
+      saas_companies: {
+        Row: {
+          admin_email: string
+          auth_user_id: string | null
+          created_at: string
+          ice: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          admin_email: string
+          auth_user_id?: string | null
+          created_at?: string
+          ice?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          admin_email?: string
+          auth_user_id?: string | null
+          created_at?: string
+          ice?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      saas_projects: {
+        Row: {
+          app_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          app_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          app_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      saas_subscription_projects: {
+        Row: {
+          project_slug: string
+          subscription_id: string
+        }
+        Insert: {
+          project_slug: string
+          subscription_id: string
+        }
+        Update: {
+          project_slug?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_subscription_projects_project_slug_fkey"
+            columns: ["project_slug"]
+            isOneToOne: false
+            referencedRelation: "saas_projects"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "saas_subscription_projects_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "saas_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saas_subscriptions: {
+        Row: {
+          amount: number
+          billing_months: number
+          company_id: string
+          created_at: string
+          device_count: number
+          expires_at: string | null
+          id: string
+          order_message_id: string
+          plan_name: string
+          starts_at: string | null
+          status: string
+          storage_quota_mb: number
+        }
+        Insert: {
+          amount?: number
+          billing_months: number
+          company_id: string
+          created_at?: string
+          device_count?: number
+          expires_at?: string | null
+          id?: string
+          order_message_id: string
+          plan_name: string
+          starts_at?: string | null
+          status?: string
+          storage_quota_mb?: number
+        }
+        Update: {
+          amount?: number
+          billing_months?: number
+          company_id?: string
+          created_at?: string
+          device_count?: number
+          expires_at?: string | null
+          id?: string
+          order_message_id?: string
+          plan_name?: string
+          starts_at?: string | null
+          status?: string
+          storage_quota_mb?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "saas_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saas_subscriptions_order_message_id_fkey"
+            columns: ["order_message_id"]
+            isOneToOne: false
+            referencedRelation: "contact_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_categories: {
         Row: {
           accent: string | null
@@ -1897,6 +2180,52 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      dodripub_claim_device_session: {
+        Args: {
+          p_device_number: string
+          p_email: string
+          p_session_token: string
+        }
+        Returns: {
+          claimed: boolean
+          company_name: string
+          device_id: string
+          error_code: string
+          expires_at: string
+          subscription_id: string
+        }[]
+      }
+      dodripub_is_subscription_admin: {
+        Args: { p_subscription_id: string }
+        Returns: boolean
+      }
+      dodripub_reserve_upload: {
+        Args: {
+          p_mime_type: string
+          p_size_bytes: number
+          p_subscription_id: string
+          p_title: string
+        }
+        Returns: {
+          media_id: string
+          storage_path: string
+          storage_quota_mb: number
+        }[]
+      }
+      dodripub_save_playlist: {
+        Args: { p_device_id: string; p_media_ids: string[] }
+        Returns: undefined
+      }
+      get_my_saas_project_access: {
+        Args: { p_project_slug: string }
+        Returns: {
+          app_url: string
+          expires_at: string
+          has_access: boolean
+        }[]
+      }
+      get_public_delivery_fee: { Args: never; Returns: number }
+      get_public_order_settings: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1905,6 +2234,40 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      lookup_customer_order_document_number: {
+        Args: { p_email: string; p_internal_reference: string }
+        Returns: string
+      }
+      lookup_customer_orders: {
+        Args: { p_email: string; p_order_reference: string }
+        Returns: {
+          created_at: string
+          message: string
+          order_reference: string
+          order_status: string
+          payment_method: string
+          pickup_expires_at: string
+          shipping_fee: number
+          subject: string
+        }[]
+      }
+      next_cart_document_number: {
+        Args: { p_doc_type: string }
+        Returns: string
+      }
+      set_cart_order_payment: {
+        Args: {
+          p_email: string
+          p_order_number: string
+          p_payment_method: string
+          p_receipt_path?: string
+        }
+        Returns: Json
+      }
+      sync_cart_document_delivery_fee: {
+        Args: { p_document_id: string; p_fee: number }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "commercial" | "editor"
